@@ -5,6 +5,18 @@ export const getScheduleDetail = (scheduleId) => api.get(`/scheduling/${schedule
 export const downloadIcal = () => api.get('/scheduling/my-schedule/ical', { responseType: 'blob' });
 // Admin
 export const generateSchedule = (data) => api.post('/scheduling/generate', data); // { semester, year, clearExisting }
+export const getAllDepartmentSchedules = (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.semester) queryParams.append('semester', params.semester);
+  if (params.year) queryParams.append('year', params.year);
+  return api.get(`/scheduling/departments/all?${queryParams.toString()}`);
+};
+export const getSchedulesByDepartment = (departmentId, params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.semester) queryParams.append('semester', params.semester);
+  if (params.year) queryParams.append('year', params.year);
+  return api.get(`/scheduling/departments/${departmentId}?${queryParams.toString()}`);
+};
 // Classroom Reservations
 export const createClassroomReservation = (data) => api.post('/reservations', data);
 export const getClassroomReservations = (filters = {}) => {

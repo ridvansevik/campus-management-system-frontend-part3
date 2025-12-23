@@ -104,6 +104,7 @@ const Layout = ({ children }) => {
         { text: 'Etkinlik Yönetimi', icon: <EventIcon />, path: '/admin/events' },
         // Part 3: Yeni Eklenen Admin Sayfaları
         { text: 'Oto. Ders Programı', icon: <CalendarMonthIcon />, path: '/admin/scheduling/generate' },
+        { text: 'Bölüm Programları', icon: <SchoolIcon />, path: '/admin/schedules/departments' },
         { text: 'Ekipman Yönetimi', icon: <BuildIcon />, path: '/admin/equipment' },
         { text: 'Kaynak Raporları', icon: <BarChartIcon />, path: '/admin/reports' }
       );

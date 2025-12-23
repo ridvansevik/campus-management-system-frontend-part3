@@ -246,7 +246,7 @@ const GenerateSchedule = () => {
                           </Typography>
                           {schedule.section?.instructor && (
                             <Typography variant="caption" display="block" color="text.secondary">
-                              <strong>Öğretim Üyesi:</strong> {schedule.section.instructor.name}
+                              <strong>Öğretim Üyesi:</strong> {schedule.section.instructor.user?.name || schedule.section.instructor.name || 'Belirtilmemiş'}
                             </Typography>
                           )}
                         </CardContent>
@@ -307,7 +307,7 @@ const GenerateSchedule = () => {
                   </Typography>
                   {previewModal.schedule.section?.instructor && (
                     <Typography variant="body2">
-                      <strong>Öğretim Üyesi:</strong> {previewModal.schedule.section.instructor.name}
+                      <strong>Öğretim Üyesi:</strong> {previewModal.schedule.section.instructor.user?.name || previewModal.schedule.section.instructor.name || 'Belirtilmemiş'}
                     </Typography>
                   )}
                 </Box>

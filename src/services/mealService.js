@@ -1,5 +1,6 @@
 import api from './api';
 
+export const getCafeterias = () => api.get('/meals/cafeterias');
 export const getMenus = (date) => api.get(`/meals/menus?date=${date || ''}`);
 export const getMenuDetail = (id) => api.get(`/meals/menus/${id}`);
 export const createReservation = (data) => api.post('/meals/reservations', data); // { menuId }
