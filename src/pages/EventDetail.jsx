@@ -232,7 +232,36 @@ const EventDetail = () => {
                 Bu etkinlik ücretlidir: {event.price} ₺ (Cüzdanınızdan düşülecektir)
               </Alert>
             )}
-            {/* Custom fields için form alanları eklenebilir */}
+            
+            {/* Custom Fields Form */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Ek Bilgiler (Opsiyonel)
+              </Typography>
+              <TextField
+                fullWidth
+                label="Telefon Numarası"
+                value={registerModal.customFields.phone || ''}
+                onChange={(e) => setRegisterModal({
+                  ...registerModal,
+                  customFields: { ...registerModal.customFields, phone: e.target.value }
+                })}
+                sx={{ mb: 2 }}
+                placeholder="5XX XXX XX XX"
+              />
+              <TextField
+                fullWidth
+                label="Özel Notlar"
+                value={registerModal.customFields.notes || ''}
+                onChange={(e) => setRegisterModal({
+                  ...registerModal,
+                  customFields: { ...registerModal.customFields, notes: e.target.value }
+                })}
+                multiline
+                rows={3}
+                placeholder="Etkinlikle ilgili özel notlarınız..."
+              />
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setRegisterModal({ open: false, customFields: {} })}>

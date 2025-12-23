@@ -26,9 +26,12 @@ const CourseDetail = () => {
         const courseRes = await api.get(`/courses/${id}`);
         setCourse(courseRes.data.data);
 
-        // 2. Bu derse ait Şubeler (Sections)
-        // Backend'de sections endpoint'ine query parametresi eklemiştik
-        const sectionsRes = await api.get(`/sections?course_id=${id}&year=2025`); // Örn: 2025 yılı filtreli
+        // 2. Bu derse ait Şubeler (Sections) - Sadece aktif dönem
+        // Önce aktif dönem bilgisini al
+        const activeTermRes = await api.get('/system/active-term');
+        const { semester, year } = activeTermRes.data.data;
+        
+        const sectionsRes = await api.get(`/sections?course_id=${id}&semester=${semester}&year=${year}`);
         setSections(sectionsRes.data.data);
       } catch (error) {
         toast.error("Ders bilgileri alınamadı.");
@@ -46,10 +49,12 @@ const CourseDetail = () => {
     setEnrollingId(sectionId);
     try {
       await api.post('/enrollments', { sectionId });
-      toast.success("Derse başarıyla kayıt oldunuz!");
-      // İsteğe bağlı: Kapasiteyi güncellemek için sections verisini tekrar çekebiliriz
-      // veya öğrenciyi "Derslerim" sayfasına yönlendirebiliriz
-      navigate('/my-courses'); 
+      toast.success("Derse başarıyla kayıt oldunuz! Programınızı görmek için 'Ders Programım' sayfasını ziyaret edebilirsiniz.");
+      // Sections verisini güncelle (kapasite değişti)
+      const activeTermRes = await api.get('/system/active-term');
+      const { semester, year } = activeTermRes.data.data;
+      const sectionsRes = await api.get(`/sections?course_id=${id}&semester=${semester}&year=${year}`);
+      setSections(sectionsRes.data.data);
     } catch (error) {
       const msg = error.response?.data?.error || "Kayıt işlemi başarısız.";
       toast.error(msg);

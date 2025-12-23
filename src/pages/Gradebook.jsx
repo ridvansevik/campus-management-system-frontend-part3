@@ -20,16 +20,17 @@ const Gradebook = () => {
   useEffect(() => {
     const fetchSections = async () => {
       try {
+        // Backend otomatik olarak öğretim üyesinin kendi derslerini getiriyor
         const res = await api.get('/sections');
-        const mySections = res.data.data.filter(
-          sec => sec.instructorId === user?.facultyProfile?.id
-        );
-        setSections(mySections);
+        setSections(res.data.data || []);
       } catch (error) {
         console.error("Şubeler alınamadı", error);
+        toast.error('Dersler yüklenemedi');
       }
     };
-    if (user?.role === 'faculty') fetchSections();
+    if (user?.role === 'faculty') {
+      fetchSections();
+    }
   }, [user]);
 
   // 2. Seçilen Şubedeki Öğrencileri Getir
@@ -38,27 +39,12 @@ const Gradebook = () => {
       if (!selectedSection) return;
       setLoading(true);
       try {
-        // Bu endpoint'i EnrollmentController'da yazmıştık veya generic bir sorgu ile alabiliriz.
-        // Ama en kolayı, section'a ait enrollment'ları çeken bir endpoint kullanmak.
-        // Hızlı çözüm: Doğrudan o section'a ait enrollmentları çeken bir sorgu yapalım.
-        // Şimdilik backend'de özel bir 'getStudentsBySection' endpoint'i yazmadık, 
-        // bunu simüle etmek için 'attendance/report' endpointini kullanabiliriz (çünkü orada öğrenci listesi var) 
-        // VEYA yeni bir endpoint yazmak en doğrusu. 
-        // Ancak işi uzatmamak için 'getAttendanceReport'tan öğrenci listesini çekip filtreleyebiliriz.
-        // DÜZELTME: Backend'de /api/v1/enrollments/students/:sectionId yazmamıştık.
-        // O yüzden en temiz yol AttendanceReport verisinden öğrenci listesini çıkarmak ya da...
-        // BEKLE! Enrollment modeli üzerinden sorgu atabiliriz.
-        // Frontend'de pratik çözüm: Rapor endpoint'i yerine, "enrollmentService" içindeki mantığı kullanalım.
-        // Tamam, Backend'e küçük bir ekleme yapmadan, mevcut 'attendance/report' endpoint'i bize enrollment ID'sini vermez.
-        // O yüzden HIZLICA BACKEND'e UFAK BİR EKLEME YAPALIM.
-        
-        // Şimdilik hata almamak için burayı boş geçiyorum, 
-        // AŞAĞIDA BACKEND'E EKLEMEMİZ GEREKEN KÜÇÜK BİR ENDPOINT VAR.
-        const res = await api.get(`/enrollments/section/${selectedSection}`); // Bunu birazdan ekleyeceğiz
-        setStudents(res.data.data);
+        // Backend'de /enrollments/section/:sectionId endpoint'i mevcut
+        const res = await api.get(`/enrollments/section/${selectedSection}`);
+        setStudents(res.data.data || []);
       } catch (error) {
-        // console.error("Öğrenci listesi alınamadı", error);
-        // Geçici olarak boş array
+        console.error("Öğrenci listesi alınamadı", error);
+        toast.error(error.response?.data?.error || 'Öğrenci listesi yüklenemedi');
         setStudents([]); 
       } finally {
         setLoading(false);
@@ -87,10 +73,18 @@ const Gradebook = () => {
     }
   };
 
+  if (user?.role !== 'faculty') {
+    return (
+      <Layout>
+        <Alert severity="error">Bu sayfa sadece öğretim üyeleri için erişilebilir.</Alert>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: '#2c3e50' }}>
-        Not Girişi
+        Derslerim ve Öğrencilerim
       </Typography>
 
       <Paper sx={{ p: 3, mb: 4 }}>
@@ -109,59 +103,104 @@ const Gradebook = () => {
         </TextField>
       </Paper>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}><CircularProgress /></Box>
-      ) : selectedSection && students.length === 0 ? (
-        <Alert severity="info">Bu derse kayıtlı öğrenci bulunamadı.</Alert>
+      {sections.length === 0 ? (
+        <Alert severity="info">
+          Henüz size atanmış bir ders bulunmamaktadır. Admin tarafından ders atandıktan sonra burada görünecektir.
+        </Alert>
       ) : (
-        selectedSection && (
-          <Table size="small">
-            <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-              <TableRow>
-                <TableCell>Öğrenci No</TableCell>
-                <TableCell>Ad Soyad</TableCell>
-                <TableCell>Vize (%40)</TableCell>
-                <TableCell>Final (%60)</TableCell>
-                <TableCell>Harf Notu</TableCell>
-                <TableCell>İşlem</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {students.map((stu) => (
-                <TableRow key={stu.id}>
-                  <TableCell>{stu.student?.student_number}</TableCell>
-                  <TableCell>{stu.student?.user?.name}</TableCell>
-                  <TableCell>
-                    <TextField 
-                      type="number" 
-                      size="small" 
-                      variant="standard"
-                      value={stu.midterm_grade || ''} 
-                      onChange={(e) => handleGradeChange(stu.id, 'midterm_grade', e.target.value)}
-                      sx={{ width: 60 }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField 
-                      type="number" 
-                      size="small" 
-                      variant="standard"
-                      value={stu.final_grade || ''}
-                      onChange={(e) => handleGradeChange(stu.id, 'final_grade', e.target.value)}
-                      sx={{ width: 60 }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {stu.letter_grade ? <Chip label={stu.letter_grade} size="small" color={stu.status === 'failed' ? 'error' : 'success'} /> : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Button size="small" variant="contained" onClick={() => handleSave(stu.id)}>Kaydet</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )
+        <>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+          ) : selectedSection ? (
+            students.length === 0 ? (
+              <Alert severity="info">Bu derse kayıtlı öğrenci bulunamadı. Öğrenciler ders seçtikten sonra burada görünecektir.</Alert>
+            ) : (
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+                  Kayıtlı Öğrenciler ({students.length})
+                </Typography>
+                <Table>
+                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableRow>
+                      <TableCell><strong>Öğrenci No</strong></TableCell>
+                      <TableCell><strong>Ad Soyad</strong></TableCell>
+                      <TableCell><strong>E-posta</strong></TableCell>
+                      <TableCell><strong>Vize (%40)</strong></TableCell>
+                      <TableCell><strong>Final (%60)</strong></TableCell>
+                      <TableCell><strong>Harf Notu</strong></TableCell>
+                      <TableCell><strong>Durum</strong></TableCell>
+                      <TableCell><strong>İşlem</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {students.map((enrollment) => (
+                      <TableRow key={enrollment.id} hover>
+                        <TableCell>{enrollment.student?.student_number || '-'}</TableCell>
+                        <TableCell>{enrollment.student?.user?.name || '-'}</TableCell>
+                        <TableCell>{enrollment.student?.user?.email || '-'}</TableCell>
+                        <TableCell>
+                          <TextField 
+                            type="number" 
+                            size="small" 
+                            variant="outlined"
+                            value={enrollment.midterm_grade || ''} 
+                            onChange={(e) => handleGradeChange(enrollment.id, 'midterm_grade', e.target.value)}
+                            sx={{ width: 80 }}
+                            inputProps={{ min: 0, max: 100, step: 0.01 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField 
+                            type="number" 
+                            size="small" 
+                            variant="outlined"
+                            value={enrollment.final_grade || ''}
+                            onChange={(e) => handleGradeChange(enrollment.id, 'final_grade', e.target.value)}
+                            sx={{ width: 80 }}
+                            inputProps={{ min: 0, max: 100, step: 0.01 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {enrollment.letter_grade ? (
+                            <Chip 
+                              label={enrollment.letter_grade} 
+                              size="small" 
+                              color={enrollment.status === 'failed' ? 'error' : 'success'} 
+                            />
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">-</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={enrollment.status === 'enrolled' ? 'Devam Ediyor' : enrollment.status}
+                            size="small"
+                            color={enrollment.status === 'enrolled' ? 'primary' : 'default'}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            size="small" 
+                            variant="contained" 
+                            onClick={() => handleSave(enrollment.id)}
+                            disabled={!enrollment.midterm_grade && !enrollment.final_grade}
+                          >
+                            Kaydet
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            )
+          ) : (
+            <Alert severity="info">
+              Lütfen yukarıdan bir ders şubesi seçin. Seçtiğiniz derse kayıtlı öğrenciler burada görünecektir.
+            </Alert>
+          )}
+        </>
       )}
     </Layout>
   );

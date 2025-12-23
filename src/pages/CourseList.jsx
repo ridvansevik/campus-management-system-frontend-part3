@@ -22,7 +22,8 @@ const CourseList = () => {
 
   const fetchCourses = async (search = '') => {
     try {
-      const res = await api.get(`/courses?search=${search}`);
+      // Sadece aktif dönemde açılan dersleri göster
+      const res = await api.get(`/courses?search=${search}&active_term_only=true`);
       setCourses(res.data.data);
     } catch (error) {
       console.error("Dersler yüklenemedi:", error);
