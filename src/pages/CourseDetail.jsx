@@ -12,35 +12,54 @@ import { useAuth } from '../context/AuthContext';
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth(); // Kullanıcı rolünü kontrol etmek için
+  const { user } = useAuth();
   
   const [course, setCourse] = useState(null);
-  const [sections, setSections] = useState([]);
+  const [sections, setSections] = useState([]); // Başlangıç değeri boş dizi
   const [loading, setLoading] = useState(true);
-  const [enrollingId, setEnrollingId] = useState(null); // Hangi şubeye kayıt olunuyor?
+  const [enrollingId, setEnrollingId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // 1. Ders Detayı
         const courseRes = await api.get(`/courses/${id}`);
-        setCourse(courseRes.data.data);
+        if (courseRes.data && courseRes.data.data) {
+          setCourse(courseRes.data.data);
+        } else {
+          throw new Error("Ders verisi alınamadı");
+        }
 
-        // 2. Bu derse ait Şubeler (Sections) - Sadece aktif dönem
-        // Önce aktif dönem bilgisini al
-        const activeTermRes = await api.get('/system/active-term');
-        const { semester, year } = activeTermRes.data.data;
-        
-        const sectionsRes = await api.get(`/sections?course_id=${id}&semester=${semester}&year=${year}`);
-        setSections(sectionsRes.data.data);
+        // 2. Bu derse ait Şubeler (Sections)
+        try {
+          // Önce aktif dönem bilgisini al
+          const activeTermRes = await api.get('/system/active-term');
+          const termData = activeTermRes.data?.data; // Güvenli erişim
+          
+          if (termData) {
+            const { semester, year } = termData;
+            const sectionsRes = await api.get(`/sections?course_id=${id}&semester=${semester}&year=${year}`);
+            // GÜVENLİK ÖNLEMİ: Gelen veri null/undefined ise boş dizi ata
+            setSections(sectionsRes.data?.data || []);
+          }
+        } catch (sectionError) {
+          console.error("Şube bilgileri alınamadı:", sectionError);
+          // Şubeler alınamazsa bile ders detayını göstermeye devam et, sections boş kalsın
+          setSections([]);
+        }
+
       } catch (error) {
-        toast.error("Ders bilgileri alınamadı.");
+        console.error("Ders detayı hatası:", error);
+        toast.error("Ders bilgileri görüntülenemedi.");
         navigate('/courses');
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    
+    if (id) {
+      fetchData();
+    }
   }, [id, navigate]);
 
   const handleEnroll = async (sectionId) => {
@@ -50,11 +69,15 @@ const CourseDetail = () => {
     try {
       await api.post('/enrollments', { sectionId });
       toast.success("Derse başarıyla kayıt oldunuz! Programınızı görmek için 'Ders Programım' sayfasını ziyaret edebilirsiniz.");
-      // Sections verisini güncelle (kapasite değişti)
+      
+      // Kayıt sonrası verileri güncelle
       const activeTermRes = await api.get('/system/active-term');
-      const { semester, year } = activeTermRes.data.data;
-      const sectionsRes = await api.get(`/sections?course_id=${id}&semester=${semester}&year=${year}`);
-      setSections(sectionsRes.data.data);
+      const termData = activeTermRes.data?.data;
+      if (termData) {
+        const { semester, year } = termData;
+        const sectionsRes = await api.get(`/sections?course_id=${id}&semester=${semester}&year=${year}`);
+        setSections(sectionsRes.data?.data || []);
+      }
     } catch (error) {
       const msg = error.response?.data?.error || "Kayıt işlemi başarısız.";
       toast.error(msg);
@@ -64,7 +87,9 @@ const CourseDetail = () => {
   };
 
   if (loading) return <Layout><Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box></Layout>;
-  if (!course) return <Layout><Alert severity="error">Ders bulunamadı.</Alert></Layout>;
+  
+  // Course null ise hata göster (Loading false olduktan sonra)
+  if (!course) return <Layout><Alert severity="error">Ders bulunamadı veya yüklenirken hata oluştu.</Alert></Layout>;
 
   return (
     <Layout>
@@ -117,7 +142,8 @@ const CourseDetail = () => {
             <Typography variant="h6" gutterBottom>Açılan Şubeler (Sections)</Typography>
             <Divider sx={{ mb: 2 }} />
 
-            {sections.length === 0 ? (
+            {/* GÜVENLİK ÖNLEMİ: sections?.length kontrolü */}
+            {!sections || sections.length === 0 ? (
               <Alert severity="info">Bu ders için bu dönem açılan şube bulunmamaktadır.</Alert>
             ) : (
               <TableContainer>
@@ -133,15 +159,16 @@ const CourseDetail = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {sections.map((section) => (
+                    {/* GÜVENLİK ÖNLEMİ: sections?.map kontrolü */}
+                    {sections?.map((section) => (
                       <TableRow key={section.id}>
                         <TableCell>Section {section.section_number}</TableCell>
                         <TableCell>{section.instructor?.user?.name || "Atanmamış"}</TableCell>
                         <TableCell>
-                          {section.schedule_json ? (
+                          {section.schedule_json && Array.isArray(section.schedule_json) ? (
                             section.schedule_json.map((s, i) => (
                               <div key={i} style={{ fontSize: '0.85rem' }}>
-                                <strong>{s.day.slice(0,3)}</strong> {s.start_time}-{s.end_time}
+                                <strong>{s.day ? s.day.slice(0,3) : ''}</strong> {s.start_time}-{s.end_time}
                               </div>
                             ))
                           ) : "-"}

@@ -19,15 +19,24 @@ const QRScanner = () => {
   const [lastResult, setLastResult] = useState(null);
   const [manualQR, setManualQR] = useState('');
 
-  const handleScan = async (detectedCodes) => {
+ const handleScan = async (detectedCodes) => {
     if (isProcessing) return;
     
     const rawValue = detectedCodes[0]?.rawValue;
     if (!rawValue || rawValue === lastScanned) return;
 
-    setIsProcessing(true);
-    setLastScanned(rawValue);
-    setLastResult(null);
+    // YENİ: Otomatik Tür Kontrolü
+    try {
+      const parsedData = JSON.parse(rawValue);
+      // Eğer taranan kodun tipi ile seçili mod uyuşmuyorsa uyarı ver
+      if (parsedData.type && parsedData.type !== scanMode) {
+        const correctMode = parsedData.type === 'event' ? 'Etkinlik' : 'Yemekhane';
+        toast.warning(`Yanlış Mod! Bu bir ${correctMode} QR kodudur. Lütfen modu değiştiriniz.`);
+        return; // İşlemi durdur
+      }
+    } catch (e) {
+      // JSON değilse (eski format veya düz token) devam et
+    }
 
     try {
       // QR kod string'i direkt backend'e gönder (backend parse edecek)
