@@ -43,6 +43,8 @@ import GenerateSchedule from './pages/admin/GenerateSchedule';
 import ClassroomReservations from './pages/ClassroomReservations';
 import EventCheckIn from './pages/EventCheckIn';
 import PaymentSuccess from './pages/PaymentSuccess';
+import EquipmentManagement from './pages/admin/EquipmentManagement';
+import ResourceUtilization from './pages/admin/ResourceUtilization';
 
 const theme = createTheme({
   palette: {
@@ -175,6 +177,9 @@ function App() {
           <Route path="/admin/events" element={<ProtectedRoute><EventManagement /></ProtectedRoute>} />
           <Route path="/admin/scheduling/generate" element={<ProtectedRoute><GenerateSchedule /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
+
+          <Route path="/admin/equipment" element={<EquipmentManagement />} />
+          <Route path="/admin/reports" element={<ResourceUtilization />} />
         </Routes>
       </Router>
         <ToastContainer position="top-right" autoClose={3000} theme="colored" />

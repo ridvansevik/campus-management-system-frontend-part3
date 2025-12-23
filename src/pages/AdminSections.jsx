@@ -67,7 +67,8 @@ const AdminSections = () => {
       setLoading(true);
       try {
         const res = await api.get(`/sections?course_id=${selectedCourse}`);
-        setSections(res.data.data);
+        // Eğer data null veya undefined gelirse boş dizi [] ata
+setSections(Array.isArray(res.data.data) ? res.data.data : []);
       } catch (error) {
         console.error("Şubeler yüklenemedi:", error);
       } finally {
@@ -136,7 +137,8 @@ const AdminSections = () => {
       
       // Listeyi yenile
       const res = await api.get(`/sections?course_id=${selectedCourse}`);
-      setSections(res.data.data);
+      // Eğer data null veya undefined gelirse boş dizi [] ata
+setSections(Array.isArray(res.data.data) ? res.data.data : []);
     } catch (error) {
       toast.error(error.response?.data?.error || "Kayıt başarısız.");
     }
@@ -215,31 +217,37 @@ const AdminSections = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {sections.map((sec) => (
-                    <TableRow key={sec.id}>
-                      <TableCell>Section {sec.section_number}</TableCell>
-                      <TableCell>{sec.instructor?.user?.name || '-'}</TableCell>
-                      <TableCell>{sec.classroom ? `${sec.classroom.building} ${sec.classroom.room_number}` : '-'}</TableCell>
-                      <TableCell>{sec.enrolled_count} / {sec.capacity}</TableCell>
-                      <TableCell>
-                        {sec.schedule_json && sec.schedule_json.map((s, i) => (
-                          <Chip 
-                            key={i} 
-                            label={`${s.day.slice(0,3)} ${s.start_time}-${s.end_time}`} 
-                            size="small" 
-                            sx={{ mr: 0.5, mb: 0.5 }} 
-                            variant="outlined"
-                          />
-                        ))}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton color="error" onClick={() => handleDelete(sec.id)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+  {/* sections dizisinin varlığını ve dizi olduğunu kontrol et */}
+  {Array.isArray(sections) && sections.map((sec) => (
+    <TableRow key={sec.id}>
+      <TableCell>Section {sec.section_number}</TableCell>
+      <TableCell>{sec.instructor?.user?.name || '-'}</TableCell>
+      <TableCell>{sec.classroom ? `${sec.classroom.building} ${sec.classroom.room_number}` : '-'}</TableCell>
+      <TableCell>{sec.enrolled_count} / {sec.capacity}</TableCell>
+      <TableCell>
+        {/* schedule_json'ın dizi olup olmadığını kontrol et */}
+        {Array.isArray(sec.schedule_json) ? (
+          sec.schedule_json.map((s, i) => (
+            <Chip 
+              key={i} 
+              label={`${s.day ? s.day.slice(0,3) : ''} ${s.start_time}-${s.end_time}`} 
+              size="small" 
+              sx={{ mr: 0.5, mb: 0.5 }} 
+              variant="outlined"
+            />
+          ))
+        ) : (
+          <span style={{ fontSize: '0.8rem', color: '#999' }}>Program Yok</span>
+        )}
+      </TableCell>
+      <TableCell align="right">
+        <IconButton color="error" onClick={() => handleDelete(sec.id)}>
+          <DeleteIcon />
+        </IconButton>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
               </Table>
             </TableContainer>
           )}

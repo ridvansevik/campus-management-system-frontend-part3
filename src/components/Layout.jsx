@@ -26,6 +26,8 @@ import RestaurantIcon from '@mui/icons-material/Restaurant';
 import EventIcon from '@mui/icons-material/Event';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
+import BuildIcon from '@mui/icons-material/Build'; // Ekipman için
+import BarChartIcon from '@mui/icons-material/BarChart'; // Raporlar için
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -99,7 +101,11 @@ const Layout = ({ children }) => {
         { text: 'Şube & Program', icon: <ClassIcon />, path: '/admin/sections' },
         // Part 3 Yönetim
         { text: 'Menü Yönetimi', icon: <RestaurantIcon />, path: '/admin/menus' },
-        { text: 'Etkinlik Yönetimi', icon: <EventIcon />, path: '/admin/events' }
+        { text: 'Etkinlik Yönetimi', icon: <EventIcon />, path: '/admin/events' },
+        // Part 3: Yeni Eklenen Admin Sayfaları
+        { text: 'Oto. Ders Programı', icon: <CalendarMonthIcon />, path: '/admin/scheduling/generate' },
+        { text: 'Ekipman Yönetimi', icon: <BuildIcon />, path: '/admin/equipment' },
+        { text: 'Kaynak Raporları', icon: <BarChartIcon />, path: '/admin/reports' }
       );
     }
 

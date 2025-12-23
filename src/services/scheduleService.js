@@ -16,3 +16,7 @@ export const getClassroomReservations = (filters = {}) => {
 };
 export const approveReservation = (id) => api.put(`/reservations/${id}/approve`);
 export const rejectReservation = (id) => api.put(`/reservations/${id}/reject`);
+// YENİ: Raporlama Endpoint'i
+export const getResourceUtilization = () => {
+  return api.get('/schedule/reports/utilization');
+};

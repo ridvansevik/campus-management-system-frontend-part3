@@ -68,7 +68,7 @@ const GenerateSchedule = () => {
                   label="Dönem"
                   onChange={(e) => setSemester(e.target.value)}
                 >
-                  <MenuItem value="fall">Güz</MenuItem>
+                 <MenuItem value="Fall">Güz</MenuItem>
                   <MenuItem value="spring">Bahar</MenuItem>
                   <MenuItem value="summer">Yaz</MenuItem>
                 </Select>
