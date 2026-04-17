@@ -10,8 +10,10 @@ import Layout from '../../components/Layout';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
+import { useTranslation } from 'react-i18next';
 
 const GenerateSchedule = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   // Aktif dönem ve yıl otomatik seçiliyor (Spring 2025)
@@ -22,7 +24,7 @@ const GenerateSchedule = () => {
 
   const handleGenerate = async () => {
     if (!semester || !year) {
-      toast.error('Dönem ve yıl bilgilerini giriniz');
+      toast.error(t('generate_schedule.enter_params'));
       return;
     }
 
@@ -32,22 +34,22 @@ const GenerateSchedule = () => {
       console.log('Program oluşturma isteği:', { semester, year, clearExisting });
       const res = await generateSchedule({ semester, year, clearExisting });
       console.log('Program oluşturma sonucu:', res.data);
-      
+
       if (res.data.success) {
         setResult(res.data);
         const scheduleCount = res.data.data?.length || 0;
         if (scheduleCount > 0) {
-          toast.success(`${scheduleCount} ders başarıyla programlandı!`);
+          toast.success(t('generate_schedule.success_msg', { count: scheduleCount }));
         } else {
-          toast.warning('Program oluşturuldu ancak hiç ders programlanamadı.');
+          toast.warning(t('generate_schedule.warning_msg'));
         }
       } else {
-        toast.error(res.data.message || 'Program oluşturulamadı');
+        toast.error(res.data.message || t('generate_schedule.error_msg'));
         setResult(res.data);
       }
     } catch (error) {
       console.error('Program oluşturma hatası:', error);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Program oluşturulamadı';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || t('generate_schedule.error_msg');
       toast.error(errorMessage);
       if (error.response?.data) {
         setResult(error.response.data);
@@ -63,21 +65,21 @@ const GenerateSchedule = () => {
         <Box display="flex" alignItems="center" gap={2} mb={3}>
           <CalendarMonthIcon sx={{ fontSize: 40, color: 'primary.main' }} />
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Otomatik Ders Programı Oluşturma
+            {t('generate_schedule.title')}
           </Typography>
         </Box>
 
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2" gutterBottom>
-            <strong>Otomatik Ders Programı Oluşturma Sistemi</strong>
+            <strong>{t('generate_schedule.system_title')}</strong>
           </Typography>
           <Typography variant="body2" component="div">
-            Bu sistem tüm dersleri otomatik olarak en uygun zaman dilimlerine ve dersliklere dağıtır.
+            {t('generate_schedule.system_desc')}
             <Box component="ul" sx={{ pl: 2, mt: 1, mb: 0 }}>
-              <li><strong>Öğretim Üyesi Çakışması:</strong> Aynı öğretim üyesi aynı saatte iki ders veremez</li>
-              <li><strong>Öğrenci Çakışması:</strong> Öğrenciler aynı saatte birden fazla derse kayıtlı olamaz</li>
-              <li><strong>Derslik Çakışması:</strong> Aynı derslik aynı saatte iki ders için kullanılamaz</li>
-              <li><strong>Kapasite Kontrolü:</strong> Derslik kapasitesi ders kapasitesinden küçük olamaz</li>
+              <li><strong>{t('generate_schedule.conflict_instructor')}</strong></li>
+              <li><strong>{t('generate_schedule.conflict_student')}</strong></li>
+              <li><strong>{t('generate_schedule.conflict_classroom')}</strong></li>
+              <li><strong>{t('generate_schedule.capacity_check')}</strong></li>
             </Box>
           </Typography>
         </Alert>
@@ -85,27 +87,27 @@ const GenerateSchedule = () => {
         {/* Parametreler */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Parametreler
+            {t('generate_schedule.params_title')}
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Dönem</InputLabel>
+                <InputLabel>{t('generate_schedule.semester')}</InputLabel>
                 <Select
                   value={semester}
-                  label="Dönem"
+                  label={t('generate_schedule.semester')}
                   onChange={(e) => setSemester(e.target.value)}
                 >
-                  <MenuItem value="Fall">Güz</MenuItem>
-                  <MenuItem value="Spring">Bahar</MenuItem>
-                  <MenuItem value="Summer">Yaz</MenuItem>
+                  <MenuItem value="Fall">{t('generate_schedule.fall')}</MenuItem>
+                  <MenuItem value="Spring">{t('generate_schedule.spring')}</MenuItem>
+                  <MenuItem value="Summer">{t('generate_schedule.summer')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Yıl"
+                label={t('generate_schedule.year')}
                 type="number"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
@@ -114,14 +116,14 @@ const GenerateSchedule = () => {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Mevcut Program</InputLabel>
+                <InputLabel>{t('generate_schedule.existing_schedule')}</InputLabel>
                 <Select
                   value={clearExisting ? 'clear' : 'keep'}
-                  label="Mevcut Program"
+                  label={t('generate_schedule.existing_schedule')}
                   onChange={(e) => setClearExisting(e.target.value === 'clear')}
                 >
-                  <MenuItem value="keep">Koru (Yeni ekle)</MenuItem>
-                  <MenuItem value="clear">Temizle (Yeniden oluştur)</MenuItem>
+                  <MenuItem value="keep">{t('generate_schedule.keep')}</MenuItem>
+                  <MenuItem value="clear">{t('generate_schedule.clear')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -135,28 +137,28 @@ const GenerateSchedule = () => {
               onClick={handleGenerate}
               disabled={loading || !semester || !year}
               startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CalendarMonthIcon />}
-              sx={{ 
+              sx={{
                 py: 1.5,
                 fontSize: '1.1rem',
                 fontWeight: 'bold'
               }}
             >
-              {loading ? 'Program Oluşturuluyor... (Çakışmalar kontrol ediliyor)' : '🚀 Otomatik Ders Dağıtımı Yap (Çakışma Kontrolü ile)'}
+              {loading ? t('generate_schedule.generating_btn') : t('generate_schedule.generate_btn')}
             </Button>
           </Box>
-          
+
           <Alert severity="success" sx={{ mt: 2 }}>
             <Typography variant="body2" gutterBottom>
-              <strong>✓ Otomatik Çakışma Kontrolü Aktif</strong>
+              <strong>✓ {t('generate_schedule.active_check')}</strong>
             </Typography>
             <Typography variant="body2">
-              Sistem aşağıdaki kontrolleri otomatik yapar:
+              {t('generate_schedule.check_desc')}
             </Typography>
             <Box component="ul" sx={{ pl: 2, mt: 1, mb: 0 }}>
-              <li>Öğretim üyelerinin aynı saatte birden fazla ders vermesini engeller</li>
-              <li>Öğrencilerin aynı saatte birden fazla derse kayıtlı olmasını engeller</li>
-              <li>Dersliklerin aynı saatte birden fazla ders için kullanılmasını engeller</li>
-              <li>Derslik kapasitelerini kontrol eder</li>
+              <li>{t('generate_schedule.check_list_1')}</li>
+              <li>{t('generate_schedule.check_list_2')}</li>
+              <li>{t('generate_schedule.check_list_3')}</li>
+              <li>{t('generate_schedule.check_list_4')}</li>
             </Box>
           </Alert>
         </Paper>
@@ -171,24 +173,24 @@ const GenerateSchedule = () => {
                 <CheckCircleIcon color="success" />
               )}
               <Typography variant="h6">
-                Program Oluşturma Sonucu
+                {t('generate_schedule.result_title')}
               </Typography>
             </Box>
 
-            <Alert 
+            <Alert
               severity={result.success === false ? 'error' : (result.unassignedSections?.length > 0 ? 'warning' : 'success')}
               sx={{ mb: 2 }}
             >
               <Typography variant="body1" fontWeight="bold">
-                {result.message || (result.success !== false ? `${result.data?.length || 0} ders başarıyla programlandı.` : 'Program oluşturulamadı.')}
+                {result.message || (result.success !== false ? t('generate_schedule.success_msg', { count: result.data?.length || 0 }) : t('generate_schedule.error_msg'))}
               </Typography>
               {result.success && result.stats && (
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="caption" display="block">
-                    • Toplam Şube: {result.stats.totalSections} | Programlanan: {result.stats.scheduledSections}
+                    • {t('generate_schedule.total_sections')}: {result.stats.totalSections} | {t('generate_schedule.scheduled_sections')}: {result.stats.scheduledSections}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    • Kullanılan Derslik: {result.stats.totalClassrooms} | Öğrenci Kayıtları: {result.stats.totalEnrollments}
+                    • {t('generate_schedule.total_classrooms')}: {result.stats.totalClassrooms} | {t('generate_schedule.total_enrollments')}: {result.stats.totalEnrollments}
                   </Typography>
                 </Box>
               )}
@@ -197,15 +199,15 @@ const GenerateSchedule = () => {
             {result.success === false && (
               <Alert severity="info" sx={{ mb: 2 }}>
                 <Typography variant="body2" gutterBottom>
-                  <strong>Olası nedenler:</strong>
+                  <strong>{t('generate_schedule.possible_causes')}</strong>
                 </Typography>
                 <Box component="ul" sx={{ pl: 2, mb: 0, mt: 1 }}>
-                  <li>Seçilen dönem ve yıl için ders/şube bulunmuyor olabilir</li>
-                  <li>Derslikler oluşturulmamış olabilir</li>
-                  <li>Tüm dersler için uygun zaman dilimi bulunamıyor olabilir (çakışmalar)</li>
+                  <li>{t('generate_schedule.cause_no_sections')}</li>
+                  <li>{t('generate_schedule.cause_no_classrooms')}</li>
+                  <li>{t('generate_schedule.cause_conflicts')}</li>
                 </Box>
                 <Typography variant="body2" sx={{ mt: 1 }}>
-                  Lütfen önce "Ders Yönetimi" ve "Şube & Program" sayfalarından dersler ve şubeler oluşturun.
+                  {t('generate_schedule.suggestion')}
                 </Typography>
               </Alert>
             )}
@@ -214,11 +216,11 @@ const GenerateSchedule = () => {
               <Box mb={3}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                   <Typography variant="subtitle1" fontWeight="bold">
-                    ✓ Programlanan Dersler ({result.data.length})
+                    ✓ {t('generate_schedule.scheduled_courses')} ({result.data.length})
                   </Typography>
-                  <Chip 
-                    label="Çakışma Yok" 
-                    color="success" 
+                  <Chip
+                    label={t('generate_schedule.no_conflict')}
+                    color="success"
                     size="small"
                     icon={<CheckCircleIcon />}
                   />
@@ -226,9 +228,9 @@ const GenerateSchedule = () => {
                 <Grid container spacing={2}>
                   {result.data.slice(0, 12).map((schedule) => (
                     <Grid item xs={12} sm={6} md={4} key={schedule.id}>
-                      <Card 
+                      <Card
                         elevation={1}
-                        sx={{ 
+                        sx={{
                           cursor: 'pointer',
                           '&:hover': { boxShadow: 4 }
                         }}
@@ -236,17 +238,17 @@ const GenerateSchedule = () => {
                       >
                         <CardContent>
                           <Typography variant="body2" fontWeight="bold" color="primary">
-                            {schedule.section?.course?.code || 'Ders'} - {schedule.section?.course?.name || ''}
+                            {schedule.section?.course?.code || t('common.course')} - {schedule.section?.course?.name || ''}
                           </Typography>
                           <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
-                            <strong>Gün:</strong> {schedule.day_of_week} | <strong>Saat:</strong> {schedule.start_time} - {schedule.end_time}
+                            <strong>{t('generate_schedule.day')}:</strong> {schedule.day_of_week} | <strong>{t('generate_schedule.time')}:</strong> {schedule.start_time} - {schedule.end_time}
                           </Typography>
                           <Typography variant="caption" display="block" color="text.secondary">
-                            <strong>Derslik:</strong> {schedule.classroom?.code || 'Derslik Yok'}
+                            <strong>{t('generate_schedule.classroom')}:</strong> {schedule.classroom?.code || t('generate_schedule.no_classroom')}
                           </Typography>
                           {schedule.section?.instructor && (
                             <Typography variant="caption" display="block" color="text.secondary">
-                              <strong>Öğretim Üyesi:</strong> {schedule.section.instructor.user?.name || schedule.section.instructor.name || 'Belirtilmemiş'}
+                              <strong>{t('generate_schedule.instructor')}:</strong> {schedule.section.instructor.user?.name || schedule.section.instructor.name || t('generate_schedule.unspecified')}
                             </Typography>
                           )}
                         </CardContent>
@@ -256,7 +258,7 @@ const GenerateSchedule = () => {
                 </Grid>
                 {result.data.length > 12 && (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                    ... ve {result.data.length - 12} ders daha
+                    {t('generate_schedule.more_courses', { count: result.data.length - 12 })}
                   </Typography>
                 )}
               </Box>
@@ -265,13 +267,13 @@ const GenerateSchedule = () => {
             {result.unassignedSections && result.unassignedSections.length > 0 && (
               <Alert severity="warning">
                 <Typography variant="subtitle2" gutterBottom>
-                  Programlanamayan Dersler ({result.unassignedSections.length})
+                  {t('generate_schedule.unassigned_courses')} ({result.unassignedSections.length})
                 </Typography>
                 <Box component="ul" sx={{ pl: 2, mb: 0 }}>
                   {result.unassignedSections.map((section, idx) => (
                     <li key={idx}>
                       <Typography variant="body2">
-                        {section.course || section.id} - Çakışma veya yetersiz kaynak
+                        {section.course || section.id} - {t('generate_schedule.conflict_or_resource')}
                       </Typography>
                     </li>
                   ))}
@@ -282,32 +284,32 @@ const GenerateSchedule = () => {
         )}
 
         {/* Önizleme Modal */}
-        <Dialog 
-          open={previewModal.open} 
+        <Dialog
+          open={previewModal.open}
           onClose={() => setPreviewModal({ open: false, schedule: null })}
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Ders Detayı</DialogTitle>
+          <DialogTitle>{t('generate_schedule.course_detail')}</DialogTitle>
           <DialogContent>
             {previewModal.schedule && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  {previewModal.schedule.section?.course?.code || 'Ders'}
+                  {previewModal.schedule.section?.course?.code || t('common.course')}
                 </Typography>
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2">
-                    <strong>Gün:</strong> {previewModal.schedule.day_of_week}
+                    <strong>{t('generate_schedule.day')}:</strong> {previewModal.schedule.day_of_week}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>Saat:</strong> {previewModal.schedule.start_time} - {previewModal.schedule.end_time}
+                    <strong>{t('generate_schedule.time')}:</strong> {previewModal.schedule.start_time} - {previewModal.schedule.end_time}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>Derslik:</strong> {previewModal.schedule.classroom?.code || 'Derslik Yok'}
+                    <strong>{t('generate_schedule.classroom')}:</strong> {previewModal.schedule.classroom?.code || t('generate_schedule.no_classroom')}
                   </Typography>
                   {previewModal.schedule.section?.instructor && (
                     <Typography variant="body2">
-                      <strong>Öğretim Üyesi:</strong> {previewModal.schedule.section.instructor.user?.name || previewModal.schedule.section.instructor.name || 'Belirtilmemiş'}
+                      <strong>{t('generate_schedule.instructor')}:</strong> {previewModal.schedule.section.instructor.user?.name || previewModal.schedule.section.instructor.name || t('generate_schedule.unspecified')}
                     </Typography>
                   )}
                 </Box>
@@ -316,7 +318,7 @@ const GenerateSchedule = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setPreviewModal({ open: false, schedule: null })}>
-              Kapat
+              {t('generate_schedule.close')}
             </Button>
           </DialogActions>
         </Dialog>

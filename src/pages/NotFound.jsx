@@ -1,7 +1,9 @@
 import { Box, Typography, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const NotFound = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -15,10 +17,10 @@ const NotFound = () => {
         textAlign: 'center'
       }}
     >
-      <Typography variant="h1" color="primary" sx={{ fontWeight: 'bold' }}>404</Typography>
-      <Typography variant="h5" sx={{ mb: 2 }}>Aradığınız sayfa bulunamadı.</Typography>
+      <Typography variant="h1" color="primary" sx={{ fontWeight: 'bold' }}>{t('not_found.title')}</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>{t('not_found.desc')}</Typography>
       <Button variant="contained" onClick={() => navigate('/')}>
-        Ana Sayfaya Dön
+        {t('not_found.back_home')}
       </Button>
     </Box>
   );

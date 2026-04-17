@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Box, Button, Chip, Divider, 
-  Card, CardContent, CardActions, Grid, Link, CircularProgress, Alert 
+import { useTranslation } from 'react-i18next';
+import {
+  Typography, Paper, Box, Button, Chip, Divider,
+  Card, CardContent, CardActions, Grid, Link, CircularProgress, Alert
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 
 const ExcuseApproval = () => {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,24 +36,26 @@ const ExcuseApproval = () => {
   const handleUpdateStatus = async (id, status) => {
     try {
       await api.put(`/attendance/excuse-requests/${id}`, { status });
-      toast.success(`Talep ${status === 'approved' ? 'onaylandı' : 'reddedildi'}.`);
+      const statusText = status === 'approved' ? t('excuse_approval.messages.approved') : t('excuse_approval.messages.rejected');
+      toast.success(t('excuse_approval.messages.success_msg', { status: statusText }));
       fetchRequests(); // Listeyi yenile
     } catch (error) {
-      toast.error("İşlem başarısız.");
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || t('excuse_approval.messages.error_msg');
+      toast.error(errorMessage);
     }
   };
 
   if (loading) return <Layout><Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box></Layout>;
-  if (user?.role !== 'faculty') return <Layout><Alert severity="error">Yetkisiz erişim.</Alert></Layout>;
+  if (user?.role !== 'faculty') return <Layout><Alert severity="error">{t('excuse_approval.messages.unauthorized')}</Alert></Layout>;
 
   return (
     <Layout>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: '#2c3e50' }}>
-        Mazeret Onayları
+        {t('excuse_approval.title')}
       </Typography>
 
       {requests.length === 0 ? (
-        <Alert severity="info">Bekleyen mazeret talebi yok.</Alert>
+        <Alert severity="info">{t('excuse_approval.no_requests')}</Alert>
       ) : (
         <Grid container spacing={3}>
           {requests.map((req) => (
@@ -63,21 +66,21 @@ const ExcuseApproval = () => {
                     <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                       {req.student?.user?.name}
                     </Typography>
-                    <Chip 
-                      label={req.status === 'pending' ? 'Bekliyor' : req.status === 'approved' ? 'Onaylandı' : 'Reddedildi'} 
-                      color={req.status === 'pending' ? 'warning' : req.status === 'approved' ? 'success' : 'error'} 
-                      size="small" 
+                    <Chip
+                      label={req.status === 'pending' ? t('excuse_approval.status.pending') : req.status === 'approved' ? t('excuse_approval.status.approved') : t('excuse_approval.status.rejected')}
+                      color={req.status === 'pending' ? 'warning' : req.status === 'approved' ? 'success' : 'error'}
+                      size="small"
                     />
                   </Box>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                     {req.student?.student_number} - {req.session?.section?.course?.name}
                   </Typography>
                   <Typography variant="caption" display="block" sx={{ mb: 2 }}>
-                    Tarih: {new Date(req.session?.date).toLocaleDateString('tr-TR')}
+                    {t('attendance_report.date')}: {new Date(req.session?.date).toLocaleDateString(i18n.language)}
                   </Typography>
-                  
+
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Typography variant="body1" sx={{ mb: 2 }}>
                     "{req.reason}"
                   </Typography>
@@ -85,29 +88,29 @@ const ExcuseApproval = () => {
                   {req.document_url && (
                     <Box sx={{ mb: 2 }}>
                       <Link href={req.document_url} target="_blank" rel="noopener noreferrer">
-                        Belgeyi Görüntüle
+                        {t('excuse_approval.actions.view_document')}
                       </Link>
                     </Box>
                   )}
                 </CardContent>
-                
+
                 {req.status === 'pending' && (
                   <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-                    <Button 
-                      startIcon={<CancelIcon />} 
-                      color="error" 
+                    <Button
+                      startIcon={<CancelIcon />}
+                      color="error"
                       onClick={() => handleUpdateStatus(req.id, 'rejected')}
                     >
-                      Reddet
+                      {t('excuse_approval.actions.reject')}
                     </Button>
-                    <Button 
-                      startIcon={<CheckCircleIcon />} 
-                      color="success" 
-                      variant="contained" 
+                    <Button
+                      startIcon={<CheckCircleIcon />}
+                      color="success"
+                      variant="contained"
                       disableElevation
                       onClick={() => handleUpdateStatus(req.id, 'approved')}
                     >
-                      Onayla
+                      {t('excuse_approval.actions.approve')}
                     </Button>
                   </CardActions>
                 )}

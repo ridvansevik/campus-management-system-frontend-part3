@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Grid, TextField, MenuItem, Button, 
-  Box, Alert, CircularProgress 
+import { useTranslation } from 'react-i18next';
+import {
+  Typography, Paper, Grid, TextField, MenuItem, Button,
+  Box, Alert, CircularProgress
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Layout from '../components/Layout';
@@ -9,16 +10,17 @@ import api from '../services/api';
 import { toast } from 'react-toastify';
 
 const ExcuseRequest = () => {
+  const { t, i18n } = useTranslation();
   // API'den gelen ham liste (Tüm kaçırılan dersler)
   const [allMissedSessions, setAllMissedSessions] = useState([]);
-  
+
   // Dropdown 1 için: Benzersiz Ders Listesi
   const [uniqueCourses, setUniqueCourses] = useState([]);
-  
+
   // Seçimler
   const [selectedSectionId, setSelectedSectionId] = useState(''); // Seçilen Ders ID
   const [selectedSessionId, setSelectedSessionId] = useState(''); // Seçilen Oturum ID
-  
+
   const [reason, setReason] = useState('');
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ const ExcuseRequest = () => {
       try {
         const res = await api.get('/attendance/missed-sessions');
         const data = res.data.data;
-        
+
         setAllMissedSessions(data);
 
         // API'den gelen düz listeden "Benzersiz Dersleri" ayıkla (İlk Dropdown için)
@@ -50,7 +52,7 @@ const ExcuseRequest = () => {
 
       } catch (error) {
         console.error("Dersler yüklenemedi", error);
-        toast.error("Mazeret bildirilebilecek dersler yüklenemedi.");
+        toast.error(t('excuse_request.load_error'));
       }
     };
     fetchMissedSessions();
@@ -71,7 +73,7 @@ const ExcuseRequest = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedSessionId || !reason || !file) {
-      toast.warning("Lütfen tüm alanları doldurun ve belge yükleyin.");
+      toast.warning(t('excuse_request.warning_fields'));
       return;
     }
 
@@ -85,23 +87,25 @@ const ExcuseRequest = () => {
       await api.post('/attendance/excuse-requests', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
-      toast.success("Mazeret talebiniz gönderildi.");
-      
+
+
+
+      toast.success(t('excuse_request.success'));
+
       // Formu ve Listeyi Güncelle (Gönderilen dersi listeden sil)
       setReason('');
       setFile(null);
       setSelectedSessionId('');
-      
+
       // Gönderilen mazereti listeden anlık olarak çıkaralım ki tekrar seçemesin
       const updatedList = allMissedSessions.filter(s => s.id !== selectedSessionId);
       setAllMissedSessions(updatedList);
-      
+
       // Eğer o derse ait başka kaçırılan oturum kalmadıysa, ders listesinden de düşmeli mi?
       // Bu karmaşa olmasın diye basitçe sayfayı yenilemek yerine state'i güncelliyoruz.
 
     } catch (error) {
-      toast.error(error.response?.data?.error || "Talep gönderilemedi.");
+      toast.error(error.response?.data?.error || t('excuse_request.error'));
     } finally {
       setLoading(false);
     }
@@ -110,28 +114,28 @@ const ExcuseRequest = () => {
   return (
     <Layout>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: '#2c3e50' }}>
-        Mazeret Bildir
+        {t('excuse_request.title')}
       </Typography>
 
       <Grid container spacing={4} justifyContent="center">
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 4, borderRadius: 2 }}>
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              
+
               <Alert severity="info">
-                Aşağıdaki listede sadece <strong>yok yazıldığınız</strong> ve henüz mazeret bildirmediğiniz dersler listelenir.
+                {t('excuse_request.info')}
               </Alert>
 
               {/* 1. DROPDOWN: Ders Seçimi */}
               <TextField
                 select
-                label="Ders Seçin"
+                label={t('excuse_request.select_course')}
                 value={selectedSectionId}
                 onChange={handleCourseChange}
                 fullWidth
               >
                 {uniqueCourses.length === 0 ? (
-                  <MenuItem disabled value="">Hiç kaçırılan ders yok</MenuItem>
+                  <MenuItem disabled value="">{t('excuse_request.no_missed_course')}</MenuItem>
                 ) : (
                   uniqueCourses.map((course) => (
                     <MenuItem key={course.sectionId} value={course.sectionId}>
@@ -144,7 +148,7 @@ const ExcuseRequest = () => {
               {/* 2. DROPDOWN: Oturum Seçimi (Filtrelenmiş) */}
               <TextField
                 select
-                label="Kaçırılan Oturum (Tarih)"
+                label={t('excuse_request.select_session')}
                 value={selectedSessionId}
                 onChange={(e) => setSelectedSessionId(e.target.value)}
                 fullWidth
@@ -152,14 +156,14 @@ const ExcuseRequest = () => {
               >
                 {availableSessions.map((ses) => (
                   <MenuItem key={ses.id} value={ses.id}>
-                    {new Date(ses.date).toLocaleDateString('tr-TR')} 
-                    {' '}({ses.start_time?.slice(0,5)} - {ses.end_time?.slice(0,5)})
+                    {new Date(ses.date).toLocaleDateString(i18n.language)}
+                    {' '}({ses.start_time?.slice(0, 5)} - {ses.end_time?.slice(0, 5)})
                   </MenuItem>
                 ))}
               </TextField>
 
               <TextField
-                label="Mazeret Açıklaması"
+                label={t('excuse_request.reason_label')}
                 multiline
                 rows={4}
                 value={reason}
@@ -178,20 +182,20 @@ const ExcuseRequest = () => {
                 />
                 <label htmlFor="raised-button-file">
                   <Button variant="outlined" component="span" startIcon={<CloudUploadIcon />}>
-                    Belge Yükle
+                    {t('excuse_request.upload_doc')}
                   </Button>
                 </label>
                 {file && <Typography variant="body2" sx={{ mt: 1, color: 'green' }}>{file.name}</Typography>}
               </Box>
 
-              <Button 
-                type="submit" 
-                variant="contained" 
-                size="large" 
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
                 disabled={loading}
                 disableElevation
               >
-                {loading ? <CircularProgress size={24} /> : 'Talebi Gönder'}
+                {loading ? <CircularProgress size={24} /> : t('excuse_request.submit')}
               </Button>
             </Box>
           </Paper>

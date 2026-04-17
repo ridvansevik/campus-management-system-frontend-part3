@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Container, Paper, Typography, Box, Card, CardContent, Chip,
   Grid, Alert, TextField, Button
@@ -12,6 +13,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import EventIcon from '@mui/icons-material/Event';
 
 const EventCheckIn = () => {
+  const { t, i18n } = useTranslation();
   const [lastScanned, setLastScanned] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastResult, setLastResult] = useState(null);
@@ -19,7 +21,7 @@ const EventCheckIn = () => {
 
   const handleScan = async (detectedCodes) => {
     if (isProcessing) return;
-    
+
     const rawValue = detectedCodes[0]?.rawValue;
     if (!rawValue || rawValue === lastScanned) return;
 
@@ -31,20 +33,20 @@ const EventCheckIn = () => {
       // QR kod formatı: JSON string veya token
       // Backend QR kod parse edecek, eventId ve registrationId gerekmez
       const res = await checkInEvent(null, null, rawValue);
-      toast.success('Check-in başarılı! ✅');
-      setLastResult({ 
-        success: true, 
+      toast.success(t('event_checkin.toast_success'));
+      setLastResult({
+        success: true,
         data: res.data.data,
-        timestamp: new Date().toLocaleString('tr-TR')
+        timestamp: new Date().toLocaleString(i18n.language)
       });
 
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.error || 'Check-in başarısız');
-      setLastResult({ 
-        success: false, 
-        error: error.response?.data?.error || 'Bilinmeyen hata',
-        timestamp: new Date().toLocaleString('tr-TR')
+      toast.error(error.response?.data?.error || t('event_checkin.toast_error'));
+      setLastResult({
+        success: false,
+        error: error.response?.data?.error || t('common.unknown_error'),
+        timestamp: new Date().toLocaleString(i18n.language)
       });
     } finally {
       setTimeout(() => {
@@ -56,7 +58,7 @@ const EventCheckIn = () => {
 
   const handleManualSubmit = async () => {
     if (!manualQR.trim()) {
-      toast.error('QR kod giriniz');
+      toast.error(t('event_checkin.validation_error'));
       return;
     }
     await handleScan([{ rawValue: manualQR.trim() }]);
@@ -68,12 +70,12 @@ const EventCheckIn = () => {
         <Box display="flex" alignItems="center" gap={2} mb={3}>
           <EventIcon sx={{ fontSize: 40, color: 'primary.main' }} />
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Etkinlik Check-In
+            {t('event_checkin.title')}
           </Typography>
         </Box>
 
         <Alert severity="info" sx={{ mb: 3 }}>
-          Etkinlik katılımcılarının QR kodlarını tarayarak giriş yapmalarını sağlayın.
+          {t('event_checkin.info')}
         </Alert>
 
         <Grid container spacing={3}>
@@ -82,22 +84,22 @@ const EventCheckIn = () => {
             <Paper sx={{ p: 3 }}>
               {isProcessing && (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  İşleniyor...
+                  {t('event_checkin.processing')}
                 </Alert>
               )}
 
-              <Box sx={{ 
-                height: 400, 
-                overflow: 'hidden', 
-                borderRadius: 2, 
+              <Box sx={{
+                height: 400,
+                overflow: 'hidden',
+                borderRadius: 2,
                 border: '2px solid',
                 borderColor: 'primary.main',
                 position: 'relative',
                 bgcolor: 'black',
                 mb: 2
               }}>
-                <Scanner 
-                  onScan={handleScan} 
+                <Scanner
+                  onScan={handleScan}
                   allowMultiple={false}
                   scanDelay={1000}
                   styles={{ container: { width: '100%', height: '100%' } }}
@@ -105,26 +107,26 @@ const EventCheckIn = () => {
               </Box>
 
               <Typography variant="caption" display="block" sx={{ mb: 2, textAlign: 'center' }}>
-                Kameraya QR kodu gösteriniz veya manuel olarak giriniz.
+                {t('event_checkin.camera_instruction')}
               </Typography>
 
               {/* Manuel QR Girişi */}
               <TextField
                 fullWidth
-                label="QR Kod (Manuel Giriş)"
+                label={t('event_checkin.manual_label')}
                 value={manualQR}
                 onChange={(e) => setManualQR(e.target.value)}
-                placeholder="QR kod string'ini buraya yapıştırın"
+                placeholder={t('event_checkin.manual_placeholder')}
                 size="small"
                 sx={{ mb: 1 }}
               />
-              <Button 
-                variant="outlined" 
-                fullWidth 
+              <Button
+                variant="outlined"
+                fullWidth
                 onClick={handleManualSubmit}
                 disabled={isProcessing || !manualQR.trim()}
               >
-                Manuel Doğrula
+                {t('event_checkin.manual_btn')}
               </Button>
             </Paper>
           </Grid>
@@ -133,9 +135,9 @@ const EventCheckIn = () => {
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 3, position: 'sticky', top: 20 }}>
               <Typography variant="h6" gutterBottom>
-                Son Check-In
+                {t('event_checkin.last_scan')}
               </Typography>
-              
+
               {lastResult ? (
                 <Card sx={{ mt: 2, bgcolor: lastResult.success ? 'success.light' : 'error.light' }}>
                   <CardContent>
@@ -146,10 +148,10 @@ const EventCheckIn = () => {
                         <Typography color="error">❌</Typography>
                       )}
                       <Typography variant="subtitle2">
-                        {lastResult.success ? 'Başarılı' : 'Hata'}
+                        {lastResult.success ? t('event_checkin.success') : t('event_checkin.error')}
                       </Typography>
                     </Box>
-                    
+
                     {lastResult.success && lastResult.data && (
                       <Box sx={{ mt: 2 }}>
                         {lastResult.data.user && (
@@ -174,10 +176,10 @@ const EventCheckIn = () => {
                         )}
                       </Box>
                     )}
-                    
+
                     {!lastResult.success && (
                       <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                        {lastResult.error || 'Bilinmeyen hata'}
+                        {lastResult.error || t('common.unknown_error')}
                       </Typography>
                     )}
                   </CardContent>
@@ -185,7 +187,7 @@ const EventCheckIn = () => {
               ) : (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="body2" color="text.secondary">
-                    QR kod tarandığında sonuç burada görünecek.
+                    {t('event_checkin.waiting')}
                   </Typography>
                 </Box>
               )}

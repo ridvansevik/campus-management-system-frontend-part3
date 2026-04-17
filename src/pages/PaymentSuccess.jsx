@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Container, Paper, Typography, Button, Box, CircularProgress, Alert } from '@mui/material';
 import { toast } from 'react-toastify';
 import Layout from '../components/Layout';
@@ -9,6 +10,7 @@ import { getBalance } from '../services/walletService';
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const sessionId = searchParams.get('session_id');
@@ -25,7 +27,7 @@ const PaymentSuccess = () => {
             // SessionId'den userId'yi parse et: mock_TIMESTAMP_USERID
             const sessionParts = sessionId.split('_');
             const userId = sessionParts.length > 2 ? sessionParts[2] : null;
-            
+
             await api.post('/wallet/topup/webhook', {
               session_id: sessionId,
               status: 'success',
@@ -46,11 +48,11 @@ const PaymentSuccess = () => {
         // Bakiyeyi güncelle
         const balanceRes = await getBalance();
         setBalance(balanceRes.data.data.balance);
-        
-        toast.success('Ödeme başarılı! Bakiye güncellendi.');
+
+        toast.success(t('payment_success.toast_success'));
       } catch (error) {
         console.error('Bakiye güncellenemedi:', error);
-        toast.error('Bakiye güncellenemedi, lütfen sayfayı yenileyin.');
+        toast.error(t('payment_success.toast_error'));
       } finally {
         setLoading(false);
       }
@@ -70,24 +72,24 @@ const PaymentSuccess = () => {
           {loading ? (
             <Box>
               <CircularProgress sx={{ mb: 2 }} />
-              <Typography variant="h6">Ödeme işleniyor...</Typography>
+              <Typography variant="h6">{t('payment_success.processing')}</Typography>
             </Box>
           ) : (
             <>
               <Box sx={{ mb: 3 }}>
                 <CheckCircleIcon sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
                 <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                  Ödeme Başarılı!
+                  {t('payment_success.title')}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" paragraph>
-                  Ödemeniz başarıyla tamamlandı.
+                  {t('payment_success.desc')}
                 </Typography>
               </Box>
 
               {sessionId && (
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <Typography variant="body2">
-                    <strong>Session ID:</strong> {sessionId}
+                    <strong>{t('payment_success.session_id')}:</strong> {sessionId}
                   </Typography>
                 </Alert>
               )}
@@ -95,7 +97,7 @@ const PaymentSuccess = () => {
               {paymentId && (
                 <Alert severity="info" sx={{ mb: 2 }}>
                   <Typography variant="body2">
-                    <strong>Payment ID:</strong> {paymentId}
+                    <strong>{t('payment_success.payment_id')}:</strong> {paymentId}
                   </Typography>
                 </Alert>
               )}
@@ -103,14 +105,14 @@ const PaymentSuccess = () => {
               {amount && (
                 <Alert severity="success" sx={{ mb: 3 }}>
                   <Typography variant="h6">
-                    Yüklenen Tutar: {parseFloat(amount).toFixed(2)} ₺
+                    {t('payment_success.amount_loaded')}: {parseFloat(amount).toFixed(2)} ₺
                   </Typography>
                 </Alert>
               )}
 
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Güncel Bakiyeniz
+                  {t('payment_success.current_balance')}
                 </Typography>
                 <Typography variant="h3" color="primary" sx={{ fontWeight: 700 }}>
                   {parseFloat(balance).toFixed(2)} ₺
@@ -122,13 +124,13 @@ const PaymentSuccess = () => {
                   variant="outlined"
                   onClick={() => navigate('/wallet')}
                 >
-                  Cüzdana Dön
+                  {t('payment_success.back_wallet')}
                 </Button>
                 <Button
                   variant="contained"
                   onClick={() => navigate('/dashboard')}
                 >
-                  Ana Sayfaya Dön
+                  {t('payment_success.back_home')}
                 </Button>
               </Box>
             </>

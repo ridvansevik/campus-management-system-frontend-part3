@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Table, TableBody, TableCell, TableContainer, 
+import {
+  Typography, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, Box, CircularProgress, Alert, Grid, Divider
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const MyAttendance = () => {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [data, setData] = useState({ stats: [], history: [] }); // Veri yapısı değişti
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +19,7 @@ const MyAttendance = () => {
       try {
         const res = await api.get('/attendance/my-attendance');
         // Backend'den { stats: [...], history: [...] } dönüyor
-        setData(res.data.data); 
+        setData(res.data.data);
       } catch (error) {
         console.error("Yoklama verisi çekilemedi", error);
       } finally {
@@ -31,45 +33,46 @@ const MyAttendance = () => {
   }, [user]);
 
   // Devamsızlık oranına göre renk belirleme
+  // Devamsızlık oranına göre renk belirleme
   const getStatusColor = (absenceRate) => {
     const rate = parseFloat(absenceRate);
-    if (rate > 30) return { bg: '#ffebee', text: '#c62828', label: 'KRİTİK' }; // Kırmızı
-    if (rate > 20) return { bg: '#fff3e0', text: '#ef6c00', label: 'UYARI' };  // Turuncu
-    return { bg: '#e8f5e9', text: '#2e7d32', label: 'İYİ' };      // Yeşil
+    if (rate > 30) return { bg: '#ffebee', text: '#c62828', label: t('my_attendance.status_critical') }; // Kırmızı
+    if (rate > 20) return { bg: '#fff3e0', text: '#ef6c00', label: t('my_attendance.status_warning') };  // Turuncu
+    return { bg: '#e8f5e9', text: '#2e7d32', label: t('my_attendance.status_good') };      // Yeşil
   };
 
   if (loading) return <Layout><Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box></Layout>;
-  if (user?.role !== 'student') return <Layout><Alert severity="error">Yetkisiz erişim.</Alert></Layout>;
+  if (user?.role !== 'student') return <Layout><Alert severity="error">{t('common.unauthorized')}</Alert></Layout>;
 
   return (
     <Layout>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ mb: 1, fontWeight: 'bold', color: '#2c3e50' }}>
-          Yoklama Durumum
+          {t('my_attendance.title')}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Ders bazlı katılım oranlarınız ve devamsızlık risk durumunuz aşağıdadır.
+          {t('my_attendance.desc')}
         </Typography>
       </Box>
 
       {/* 1. BÖLÜM: DERS BAZLI ÖZET TABLOSU */}
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#1565c0' }}>
-        Ders Bazlı İstatistikler
+        {t('my_attendance.section_stats')}
       </Typography>
-      
+
       {data.stats.length === 0 ? (
-         <Alert severity="info" sx={{ mb: 4 }}>Henüz kayıtlı olduğunuz bir ders bulunmuyor.</Alert>
+        <Alert severity="info" sx={{ mb: 4 }}>{t('my_attendance.no_course')}</Alert>
       ) : (
         <TableContainer component={Paper} sx={{ mb: 6, boxShadow: 2 }}>
           <Table>
             <TableHead sx={{ bgcolor: '#f5f5f5' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Ders</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Toplam Oturum</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Katıldığınız</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Kaçırdığınız</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Katılım Oranı</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Durum</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('my_attendance.course')}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>{t('my_attendance.total_sessions')}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>{t('my_attendance.attended')}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>{t('my_attendance.missed')}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>{t('my_attendance.rate')}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>{t('my_attendance.status')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -85,9 +88,9 @@ const MyAttendance = () => {
                     <TableCell align="center" sx={{ color: 'red', fontWeight: 'bold' }}>{stat.missedSessions}</TableCell>
                     <TableCell align="center">
                       <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                        <CircularProgress 
-                          variant="determinate" 
-                          value={parseFloat(stat.attendanceRate)} 
+                        <CircularProgress
+                          variant="determinate"
+                          value={parseFloat(stat.attendanceRate)}
                           color={parseFloat(stat.absenceRate) > 20 ? "warning" : "primary"}
                           size={40}
                         />
@@ -105,14 +108,14 @@ const MyAttendance = () => {
                       </Box>
                     </TableCell>
                     <TableCell align="center">
-                      <Chip 
-                        label={status.label} 
-                        sx={{ 
-                          bgcolor: 'white', 
-                          color: status.text, 
+                      <Chip
+                        label={status.label}
+                        sx={{
+                          bgcolor: 'white',
+                          color: status.text,
                           fontWeight: 'bold',
                           border: `1px solid ${status.text}`
-                        }} 
+                        }}
                       />
                     </TableCell>
                   </TableRow>
@@ -127,22 +130,22 @@ const MyAttendance = () => {
 
       {/* 2. BÖLÜM: SON HAREKETLER (LOG) */}
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#1565c0' }}>
-        Son Yoklama Geçmişi
+        {t('my_attendance.history_title')}
       </Typography>
 
       {data.history.length === 0 ? (
-        <Alert severity="info">Henüz katıldığınız bir yoklama kaydı yok.</Alert>
+        <Alert severity="info">{t('my_attendance.no_history')}</Alert>
       ) : (
         <Paper sx={{ width: '100%', overflow: 'hidden', borderRadius: 2, border: '1px solid #e0e0e0' }}>
           <TableContainer>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Ders</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Tarih</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Giriş Saati</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Mesafe</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Durum</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{t('my_attendance.course')}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{t('my_attendance.date')}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{t('my_attendance.check_in_time')}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{t('my_attendance.distance')}</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{t('my_attendance.status')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -154,15 +157,15 @@ const MyAttendance = () => {
                   return (
                     <TableRow key={record.id} hover>
                       <TableCell>{course?.code} - {course?.name}</TableCell>
-                      <TableCell>{new Date(session.date).toLocaleDateString('tr-TR')}</TableCell>
-                      <TableCell>{new Date(record.check_in_time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</TableCell>
+                      <TableCell>{new Date(session.date).toLocaleDateString(i18n.language)}</TableCell>
+                      <TableCell>{new Date(record.check_in_time).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</TableCell>
                       <TableCell>{Math.round(record.distance_from_center)}m</TableCell>
                       <TableCell>
-                        <Chip 
-                          label={record.is_flagged ? "Şüpheli" : "Başarılı"} 
-                          color={record.is_flagged ? "warning" : "success"} 
-                          size="small" 
-                          variant="filled" 
+                        <Chip
+                          label={record.is_flagged ? t('my_attendance.flag_suspicious') : t('my_attendance.flag_success')}
+                          color={record.is_flagged ? "warning" : "success"}
+                          size="small"
+                          variant="filled"
                         />
                       </TableCell>
                     </TableRow>

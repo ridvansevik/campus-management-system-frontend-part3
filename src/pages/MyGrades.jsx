@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Box, CircularProgress, Alert, Chip, Button 
+import { useTranslation } from 'react-i18next';
+import {
+  Typography, Paper, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Box, CircularProgress, Alert, Chip, Button
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download'; // <--- YENİ
 import Layout from '../components/Layout';
@@ -10,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
 const MyGrades = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [grades, setGrades] = useState([]);
   const [gpa, setGpa] = useState(0);
@@ -49,54 +51,54 @@ const MyGrades = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Transkript indirildi.");
+      toast.success(t('grades.transcript_downloaded'));
     } catch (error) {
       console.error("PDF Hatası:", error);
-      toast.error("Transkript indirilemedi.");
+      toast.error(t('grades.transcript_failed'));
     } finally {
       setDownloading(false);
     }
   };
 
   if (loading) return <Layout><Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box></Layout>;
-  if (user?.role !== 'student') return <Layout><Alert severity="error">Yetkisiz erişim.</Alert></Layout>;
+  if (user?.role !== 'student') return <Layout><Alert severity="error">{t('my_courses.unauthorized')}</Alert></Layout>;
 
   return (
     <Layout>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>Notlarım</Typography>
-        
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>{t('grades.title')}</Typography>
+
         <Box sx={{ display: 'flex', gap: 2 }}>
           {/* YENİ BUTON */}
-          <Button 
-            variant="outlined" 
-            startIcon={downloading ? <CircularProgress size={20} /> : <DownloadIcon />} 
+          <Button
+            variant="outlined"
+            startIcon={downloading ? <CircularProgress size={20} /> : <DownloadIcon />}
             onClick={handleDownloadPDF}
             disabled={downloading}
           >
-            Transkript İndir (PDF)
+            {t('grades.download_transcript')}
           </Button>
-          
+
           <Paper sx={{ p: 2, bgcolor: '#e3f2fd', border: '1px solid #90caf9' }}>
-            <Typography variant="h6" color="primary">GPA: {gpa}</Typography>
+            <Typography variant="h6" color="primary">{t('grades.gpa')}: {gpa}</Typography>
           </Paper>
         </Box>
       </Box>
 
       {grades.length === 0 ? (
-        <Alert severity="info">Henüz not girişi yapılmış dersiniz yok.</Alert>
+        <Alert severity="info">{t('grades.no_data')}</Alert>
       ) : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead sx={{ bgcolor: '#f5f5f5' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Ders Kodu</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Ders Adı</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Kredi</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Vize</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Final</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Harf</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Durum</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('my_courses.code')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('my_courses.name')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('courses.credits')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('grades.midterm')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('grades.final')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('grades.letter')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>{t('my_courses.status')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -111,9 +113,9 @@ const MyGrades = () => {
                     {grade.letter_grade ? <Chip label={grade.letter_grade} color="primary" size="small" /> : '-'}
                   </TableCell>
                   <TableCell>
-                    {grade.status === 'passed' && <Chip label="Geçti" color="success" size="small" variant="outlined" />}
-                    {grade.status === 'failed' && <Chip label="Kaldı" color="error" size="small" variant="outlined" />}
-                    {grade.status === 'enrolled' && <Chip label="Devam Ediyor" color="default" size="small" variant="outlined" />}
+                    {grade.status === 'passed' && <Chip label={t('my_courses.passed')} color="success" size="small" variant="outlined" />}
+                    {grade.status === 'failed' && <Chip label={t('my_courses.failed')} color="error" size="small" variant="outlined" />}
+                    {grade.status === 'enrolled' && <Chip label={t('my_courses.enrolled')} color="default" size="small" variant="outlined" />}
                   </TableCell>
                 </TableRow>
               ))}

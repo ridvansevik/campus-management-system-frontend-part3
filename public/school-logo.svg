@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2c5282;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4af37;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b8960c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#grad1)" stroke="#d4af37" stroke-width="2"/>
+  
+  <!-- Book base -->
+  <path d="M16 40 L32 48 L48 40 L48 28 L32 36 L16 28 Z" fill="url(#grad2)"/>
+  
+  <!-- Book pages left -->
+  <path d="M16 28 L32 36 L32 48 L16 40 Z" fill="#f5e6b8" stroke="#d4af37" stroke-width="0.5"/>
+  
+  <!-- Book pages right -->
+  <path d="M48 28 L32 36 L32 48 L48 40 Z" fill="#fff8dc" stroke="#d4af37" stroke-width="0.5"/>
+  
+  <!-- Building/Pillars representing campus -->
+  <rect x="20" y="20" width="4" height="14" fill="#d4af37" rx="1"/>
+  <rect x="30" y="18" width="4" height="16" fill="#d4af37" rx="1"/>
+  <rect x="40" y="20" width="4" height="14" fill="#d4af37" rx="1"/>
+  
+  <!-- Roof/Triangle representing knowledge -->
+  <path d="M18 20 L32 10 L46 20 Z" fill="url(#grad2)" stroke="#b8960c" stroke-width="0.5"/>
+  
+  <!-- Top decoration - small circle -->
+  <circle cx="32" cy="10" r="2" fill="#fff8dc" stroke="#d4af37" stroke-width="0.5"/>
+</svg>

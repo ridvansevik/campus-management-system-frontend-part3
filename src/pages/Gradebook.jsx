@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Box, TextField, MenuItem, Button, 
-  Table, TableBody, TableCell, TableHead, TableRow, 
-  CircularProgress, Alert, Chip 
+import {
+  Typography, Paper, Box, TextField, MenuItem, Button,
+  Table, TableBody, TableCell, TableHead, TableRow,
+  CircularProgress, Alert, Chip
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +12,7 @@ import { toast } from 'react-toastify';
 
 const Gradebook = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState('');
   const [students, setStudents] = useState([]);
@@ -25,7 +27,7 @@ const Gradebook = () => {
         setSections(res.data.data || []);
       } catch (error) {
         console.error("Şubeler alınamadı", error);
-        toast.error('Dersler yüklenemedi');
+        toast.error(t('gradebook.load_error'));
       }
     };
     if (user?.role === 'faculty') {
@@ -44,8 +46,8 @@ const Gradebook = () => {
         setStudents(res.data.data || []);
       } catch (error) {
         console.error("Öğrenci listesi alınamadı", error);
-        toast.error(error.response?.data?.error || 'Öğrenci listesi yüklenemedi');
-        setStudents([]); 
+        toast.error(error.response?.data?.error || t('gradebook.student_load_error'));
+        setStudents([]);
       } finally {
         setLoading(false);
       }
@@ -55,7 +57,7 @@ const Gradebook = () => {
   }, [selectedSection]);
 
   const handleGradeChange = (enrollmentId, field, value) => {
-    setStudents(prev => prev.map(stu => 
+    setStudents(prev => prev.map(stu =>
       stu.id === enrollmentId ? { ...stu, [field]: value } : stu
     ));
   };
@@ -67,16 +69,16 @@ const Gradebook = () => {
         midterm_grade: student.midterm_grade,
         final_grade: student.final_grade
       });
-      toast.success("Not kaydedildi.");
+      toast.success(t('gradebook.save_success'));
     } catch (error) {
-      toast.error("Not kaydedilemedi.");
+      toast.error(t('gradebook.save_error'));
     }
   };
 
   if (user?.role !== 'faculty') {
     return (
       <Layout>
-        <Alert severity="error">Bu sayfa sadece öğretim üyeleri için erişilebilir.</Alert>
+        <Alert severity="error">{t('gradebook.unauthorized')}</Alert>
       </Layout>
     );
   }
@@ -84,13 +86,13 @@ const Gradebook = () => {
   return (
     <Layout>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: '#2c3e50' }}>
-        Derslerim ve Öğrencilerim
+        {t('gradebook.title')}
       </Typography>
 
       <Paper sx={{ p: 3, mb: 4 }}>
         <TextField
           select
-          label="Ders Şubesi Seçin"
+          label={t('gradebook.select_section')}
           value={selectedSection}
           onChange={(e) => setSelectedSection(e.target.value)}
           fullWidth
@@ -105,7 +107,7 @@ const Gradebook = () => {
 
       {sections.length === 0 ? (
         <Alert severity="info">
-          Henüz size atanmış bir ders bulunmamaktadır. Admin tarafından ders atandıktan sonra burada görünecektir.
+          {t('gradebook.no_assigned_course')}
         </Alert>
       ) : (
         <>
@@ -113,91 +115,93 @@ const Gradebook = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
           ) : selectedSection ? (
             students.length === 0 ? (
-              <Alert severity="info">Bu derse kayıtlı öğrenci bulunamadı. Öğrenciler ders seçtikten sonra burada görünecektir.</Alert>
+              <Alert severity="info">{t('gradebook.no_students')}</Alert>
             ) : (
-              <Paper sx={{ p: 3 }}>
+              <Paper sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-                  Kayıtlı Öğrenciler ({students.length})
+                  {t('gradebook.students_count')} ({students.length})
                 </Typography>
-                <Table>
-                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-                    <TableRow>
-                      <TableCell><strong>Öğrenci No</strong></TableCell>
-                      <TableCell><strong>Ad Soyad</strong></TableCell>
-                      <TableCell><strong>E-posta</strong></TableCell>
-                      <TableCell><strong>Vize (%40)</strong></TableCell>
-                      <TableCell><strong>Final (%60)</strong></TableCell>
-                      <TableCell><strong>Harf Notu</strong></TableCell>
-                      <TableCell><strong>Durum</strong></TableCell>
-                      <TableCell><strong>İşlem</strong></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {students.map((enrollment) => (
-                      <TableRow key={enrollment.id} hover>
-                        <TableCell>{enrollment.student?.student_number || '-'}</TableCell>
-                        <TableCell>{enrollment.student?.user?.name || '-'}</TableCell>
-                        <TableCell>{enrollment.student?.user?.email || '-'}</TableCell>
-                        <TableCell>
-                          <TextField 
-                            type="number" 
-                            size="small" 
-                            variant="outlined"
-                            value={enrollment.midterm_grade || ''} 
-                            onChange={(e) => handleGradeChange(enrollment.id, 'midterm_grade', e.target.value)}
-                            sx={{ width: 80 }}
-                            inputProps={{ min: 0, max: 100, step: 0.01 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField 
-                            type="number" 
-                            size="small" 
-                            variant="outlined"
-                            value={enrollment.final_grade || ''}
-                            onChange={(e) => handleGradeChange(enrollment.id, 'final_grade', e.target.value)}
-                            sx={{ width: 80 }}
-                            inputProps={{ min: 0, max: 100, step: 0.01 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {enrollment.letter_grade ? (
-                            <Chip 
-                              label={enrollment.letter_grade} 
-                              size="small" 
-                              color={enrollment.status === 'failed' ? 'error' : 'success'} 
-                            />
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">-</Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={enrollment.status === 'enrolled' ? 'Devam Ediyor' : enrollment.status}
-                            size="small"
-                            color={enrollment.status === 'enrolled' ? 'primary' : 'default'}
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            size="small" 
-                            variant="contained" 
-                            onClick={() => handleSave(enrollment.id)}
-                            disabled={!enrollment.midterm_grade && !enrollment.final_grade}
-                          >
-                            Kaydet
-                          </Button>
-                        </TableCell>
+                <Box sx={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  <Table sx={{ minWidth: 800 }}>
+                    <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                      <TableRow>
+                        <TableCell><strong>{t('gradebook.student_no')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.name')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.email')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.midterm')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.final')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.letter_grade')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.status')}</strong></TableCell>
+                        <TableCell><strong>{t('gradebook.action')}</strong></TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHead>
+                    <TableBody>
+                      {students.map((enrollment) => (
+                        <TableRow key={enrollment.id} hover>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{enrollment.student?.student_number || '-'}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{enrollment.student?.user?.name || '-'}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{enrollment.student?.user?.email || '-'}</TableCell>
+                          <TableCell>
+                            <TextField
+                              type="number"
+                              size="small"
+                              variant="outlined"
+                              value={enrollment.midterm_grade || ''}
+                              onChange={(e) => handleGradeChange(enrollment.id, 'midterm_grade', e.target.value)}
+                              sx={{ width: 80 }}
+                              inputProps={{ min: 0, max: 100, step: 0.01 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              type="number"
+                              size="small"
+                              variant="outlined"
+                              value={enrollment.final_grade || ''}
+                              onChange={(e) => handleGradeChange(enrollment.id, 'final_grade', e.target.value)}
+                              sx={{ width: 80 }}
+                              inputProps={{ min: 0, max: 100, step: 0.01 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {enrollment.letter_grade ? (
+                              <Chip
+                                label={enrollment.letter_grade}
+                                size="small"
+                                color={enrollment.status === 'failed' ? 'error' : 'success'}
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">-</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={enrollment.status === 'enrolled' ? t('gradebook.status_enrolled') : enrollment.status}
+                              size="small"
+                              color={enrollment.status === 'enrolled' ? 'primary' : 'default'}
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => handleSave(enrollment.id)}
+                              disabled={!enrollment.midterm_grade && !enrollment.final_grade}
+                            >
+                              {t('gradebook.save_btn')}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
               </Paper>
             )
           ) : (
             <Alert severity="info">
-              Lütfen yukarıdan bir ders şubesi seçin. Seçtiğiniz derse kayıtlı öğrenciler burada görünecektir.
+              {t('gradebook.select_section_info')}
             </Alert>
           )}
         </>

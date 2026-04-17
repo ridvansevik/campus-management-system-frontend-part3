@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, Grid, Card, CardContent, Typography, Button, Box, 
-  Dialog, DialogTitle, DialogContent, DialogActions, Chip, 
+import { useTranslation } from 'react-i18next';
+import {
+  Container, Grid, Card, CardContent, Typography, Button, Box,
+  Dialog, DialogTitle, DialogContent, DialogActions, Chip,
   TextField, Paper
 } from '@mui/material';
 import { getMenus, createReservation, getMenuDetail } from '../services/mealService';
@@ -12,6 +13,7 @@ import LocalDiningIcon from '@mui/icons-material/LocalDining';
 import { QRCodeSVG } from 'qrcode.react';
 
 const MealMenu = () => {
+  const { t } = useTranslation();
   const [menus, setMenus] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [reservationModal, setReservationModal] = useState({ open: false, menu: null });
@@ -27,7 +29,7 @@ const MealMenu = () => {
       setMenus(res.data.data);
     } catch (error) {
       console.error(error);
-      toast.error('Menü yüklenemedi');
+      toast.error(t('meal_menu.load_error'));
     }
   };
 
@@ -35,11 +37,11 @@ const MealMenu = () => {
     try {
       setLoading(true);
       const res = await createReservation({ menuId });
-      toast.success('Rezervasyon oluşturuldu! QR kodunuz "Rezervasyonlarım" sayfasında.');
+      toast.success(t('meal_menu.reserve_success'));
       setReservationModal({ open: false, menu: null });
       fetchMenus(); // Menü listesini güncelle
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Rezervasyon başarısız');
+      toast.error(error.response?.data?.error || t('meal_menu.reserve_failed'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ const MealMenu = () => {
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Yemek Menüsü
+            {t('meal_menu.title')}
           </Typography>
           <Box display="flex" alignItems="center" gap={1}>
             <CalendarTodayIcon color="primary" />
@@ -82,13 +84,13 @@ const MealMenu = () => {
         {/* Öğle Yemeği */}
         <Box mb={4}>
           <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <LocalDiningIcon /> Öğle Yemeği
+            <LocalDiningIcon /> {t('meal_menu.lunch')}
           </Typography>
           <Grid container spacing={3}>
             {lunchMenus.length === 0 ? (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography color="text.secondary">Bu tarih için öğle yemeği menüsü bulunamadı.</Typography>
+                  <Typography color="text.secondary">{t('meal_menu.no_lunch')}</Typography>
                 </Paper>
               </Grid>
             ) : (
@@ -98,10 +100,10 @@ const MealMenu = () => {
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                         <Typography variant="h6" color="primary">
-                          {menu.Cafeteria?.name || 'Yemekhane'}
+                          {menu.Cafeteria?.name || t('meal_menu.cafeteria_default')}
                         </Typography>
-                        <Chip 
-                          label={parseFloat(menu.price) === 0 ? 'Ücretsiz' : `${menu.price} ₺`}
+                        <Chip
+                          label={parseFloat(menu.price) === 0 ? t('meal_menu.free') : `${menu.price} ₺`}
                           color={parseFloat(menu.price) === 0 ? 'success' : 'default'}
                           size="small"
                         />
@@ -122,19 +124,18 @@ const MealMenu = () => {
                             </Typography>
                           ))
                         ) : (
-                          <Typography variant="body2" color="text.secondary">Menü bilgisi yok</Typography>
+                          <Typography variant="body2" color="text.secondary">{t('meal_menu.no_info')}</Typography>
                         )}
                       </Box>
-
                       {/* Beslenme Bilgileri */}
                       {menu.nutrition_json && (
-                        <Box sx={{ mt: 2, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                        <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
                           <Typography variant="caption" display="block">
-                            <strong>Kalori:</strong> {menu.nutrition_json.calories || 'N/A'} kcal
+                            <strong>{t('meal_menu.calories')}:</strong> {menu.nutrition_json.calories || 'N/A'} kcal
                           </Typography>
                           {menu.nutrition_json.protein && (
                             <Typography variant="caption" display="block">
-                              <strong>Protein:</strong> {menu.nutrition_json.protein} g
+                              <strong>{t('meal_menu.protein')}:</strong> {menu.nutrition_json.protein} g
                             </Typography>
                           )}
                         </Box>
@@ -151,13 +152,13 @@ const MealMenu = () => {
                       </Box>
                     </CardContent>
                     <Box sx={{ p: 2, pt: 0 }}>
-                      <Button 
-                        variant="contained" 
-                        fullWidth 
+                      <Button
+                        variant="contained"
+                        fullWidth
                         onClick={() => openReservationModal(menu)}
                         disabled={loading}
                       >
-                        Rezervasyon Yap
+                        {t('meal_menu.reserve')}
                       </Button>
                     </Box>
                   </Card>
@@ -170,13 +171,13 @@ const MealMenu = () => {
         {/* Akşam Yemeği */}
         <Box>
           <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <LocalDiningIcon /> Akşam Yemeği
+            <LocalDiningIcon /> {t('meal_menu.dinner')}
           </Typography>
           <Grid container spacing={3}>
             {dinnerMenus.length === 0 ? (
               <Grid item xs={12}>
                 <Paper sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography color="text.secondary">Bu tarih için akşam yemeği menüsü bulunamadı.</Typography>
+                  <Typography color="text.secondary">{t('meal_menu.no_dinner')}</Typography>
                 </Paper>
               </Grid>
             ) : (
@@ -186,10 +187,10 @@ const MealMenu = () => {
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                         <Typography variant="h6" color="primary">
-                          {menu.Cafeteria?.name || 'Yemekhane'}
+                          {menu.Cafeteria?.name || t('meal_menu.cafeteria_default')}
                         </Typography>
-                        <Chip 
-                          label={parseFloat(menu.price) === 0 ? 'Ücretsiz' : `${menu.price} ₺`}
+                        <Chip
+                          label={parseFloat(menu.price) === 0 ? t('meal_menu.free') : `${menu.price} ₺`}
                           color={parseFloat(menu.price) === 0 ? 'success' : 'default'}
                           size="small"
                         />
@@ -209,18 +210,18 @@ const MealMenu = () => {
                             </Typography>
                           ))
                         ) : (
-                          <Typography variant="body2" color="text.secondary">Menü bilgisi yok</Typography>
+                          <Typography variant="body2" color="text.secondary">{t('meal_menu.no_info')}</Typography>
                         )}
                       </Box>
 
                       {menu.nutrition_json && (
-                        <Box sx={{ mt: 2, p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
+                        <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
                           <Typography variant="caption" display="block">
-                            <strong>Kalori:</strong> {menu.nutrition_json.calories || 'N/A'} kcal
+                            <strong>{t('meal_menu.calories')}:</strong> {menu.nutrition_json.calories || 'N/A'} kcal
                           </Typography>
                           {menu.nutrition_json.protein && (
                             <Typography variant="caption" display="block">
-                              <strong>Protein:</strong> {menu.nutrition_json.protein} g
+                              <strong>{t('meal_menu.protein')}:</strong> {menu.nutrition_json.protein} g
                             </Typography>
                           )}
                         </Box>
@@ -236,13 +237,13 @@ const MealMenu = () => {
                       </Box>
                     </CardContent>
                     <Box sx={{ p: 2, pt: 0 }}>
-                      <Button 
-                        variant="contained" 
-                        fullWidth 
+                      <Button
+                        variant="contained"
+                        fullWidth
                         onClick={() => openReservationModal(menu)}
                         disabled={loading}
                       >
-                        Rezervasyon Yap
+                        {t('meal_menu.reserve')}
                       </Button>
                     </Box>
                   </Card>
@@ -254,35 +255,35 @@ const MealMenu = () => {
 
         {/* Rezervasyon Onay Modal */}
         <Dialog open={reservationModal.open} onClose={() => setReservationModal({ open: false, menu: null })} maxWidth="sm" fullWidth>
-          <DialogTitle>Rezervasyon Onayı</DialogTitle>
+          <DialogTitle>{t('meal_menu.confirm_title')}</DialogTitle>
           <DialogContent>
             {reservationModal.menu && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  {reservationModal.menu.meal_type === 'lunch' ? 'Öğle Yemeği' : 'Akşam Yemeği'}
+                  {reservationModal.menu.meal_type === 'lunch' ? t('meal_menu.lunch') : t('meal_menu.dinner')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Tarih: {reservationModal.menu.date}
+                  {t('meal_menu.date')}: {reservationModal.menu.date}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Yemekhane: {reservationModal.menu.Cafeteria?.name}
+                  {t('meal_menu.cafeteria')}: {reservationModal.menu.Cafeteria?.name}
                 </Typography>
                 {parseFloat(reservationModal.menu.price) > 0 && (
                   <Typography variant="body1" color="primary" sx={{ mt: 2 }}>
-                    Ücret: {reservationModal.menu.price} ₺
+                    {t('meal_menu.price')}: {reservationModal.menu.price} ₺
                   </Typography>
                 )}
               </Box>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setReservationModal({ open: false, menu: null })}>İptal</Button>
-            <Button 
-              variant="contained" 
+            <Button onClick={() => setReservationModal({ open: false, menu: null })}>{t('meal_menu.cancel')}</Button>
+            <Button
+              variant="contained"
               onClick={() => handleReserve(reservationModal.menu.id)}
               disabled={loading}
             >
-              Onayla
+              {t('meal_menu.confirm')}
             </Button>
           </DialogActions>
         </Dialog>

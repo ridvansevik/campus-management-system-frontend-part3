@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Grid, Box, Chip, Button, IconButton, 
+import { useTranslation } from 'react-i18next';
+import {
+  Typography, Paper, Grid, Box, Chip, Button, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  CircularProgress, Alert, Card, CardContent, CardActions
+  CircularProgress, Alert, Card, CardContent, CardActions, useMediaQuery, useTheme
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,9 +14,12 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
 const Announcements = () => {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Modal State
   const [open, setOpen] = useState(false);
@@ -38,28 +42,28 @@ const Announcements = () => {
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.content) {
-      toast.warning("Başlık ve içerik zorunludur.");
+      toast.warning(t('announcements.required_error'));
       return;
     }
     try {
       await api.post('/announcements', formData);
-      toast.success("Duyuru yayınlandı.");
+      toast.success(t('announcements.published'));
       setOpen(false);
       setFormData({ title: '', content: '', target_role: 'all', priority: 'normal' }); // Reset
       fetchAnnouncements();
     } catch (error) {
-      toast.error("Duyuru eklenemedi.");
+      toast.error(t('announcements.add_failed'));
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bu duyuruyu silmek istediğinize emin misiniz?")) return;
+    if (!window.confirm(t('announcements.confirm_delete'))) return;
     try {
       await api.delete(`/announcements/${id}`);
-      toast.success("Duyuru silindi.");
+      toast.success(t('announcements.deleted'));
       setAnnouncements(prev => prev.filter(a => a.id !== id));
     } catch (error) {
-      toast.error("Silme işlemi başarısız.");
+      toast.error(t('notifications.operation_failed'));
     }
   };
 
@@ -67,32 +71,40 @@ const Announcements = () => {
 
   return (
     <Layout>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-          Duyurular
+      <Box sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: 2,
+        mb: 4
+      }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50', fontSize: { xs: '1.5rem', sm: '2rem' } }}>
+          {t('announcements.title')}
         </Typography>
         {user?.role === 'admin' && (
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={() => setOpen(true)}
             disableElevation
+            size={isMobile ? 'small' : 'medium'}
           >
-            Yeni Duyuru
+            {t('announcements.new')}
           </Button>
         )}
       </Box>
 
       {announcements.length === 0 ? (
-        <Alert severity="info">Henüz yayınlanmış bir duyuru yok.</Alert>
+        <Alert severity="info">{t('announcements.no_data')}</Alert>
       ) : (
         <Grid container spacing={3}>
           {announcements.map((ann) => (
             <Grid item xs={12} key={ann.id}>
-              <Card sx={{ 
-                borderRadius: 2, 
+              <Card sx={{
+                borderRadius: 2,
                 borderLeft: ann.priority === 'high' ? '6px solid #d32f2f' : '6px solid #1976d2',
-                boxShadow: 2 
+                boxShadow: 2
               }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
@@ -101,22 +113,22 @@ const Announcements = () => {
                       <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                         {ann.title}
                       </Typography>
-                      {ann.priority === 'high' && <Chip label="ÖNEMLİ" color="error" size="small" />}
+                      {ann.priority === 'high' && <Chip label={t('announcements.important')} color="error" size="small" />}
                     </Box>
                     <Typography variant="caption" color="text.secondary">
-                      {new Date(ann.created_at).toLocaleDateString('tr-TR')}
+                      {new Date(ann.createdAt).toLocaleDateString(i18n.language)}
                     </Typography>
                   </Box>
-                  
+
                   <Typography variant="body1" sx={{ mt: 2, whiteSpace: 'pre-line' }}>
                     {ann.content}
                   </Typography>
 
                   <Box sx={{ mt: 2 }}>
-                    <Chip 
-                      label={ann.target_role === 'all' ? 'Genel' : ann.target_role === 'student' ? 'Öğrenciler' : 'Akademik'} 
-                      size="small" 
-                      variant="outlined" 
+                    <Chip
+                      label={ann.target_role === 'all' ? t('announcements.general') : ann.target_role === 'student' ? t('common.students') : t('common.faculty')}
+                      size="small"
+                      variant="outlined"
                       sx={{ fontSize: '0.75rem' }}
                     />
                   </Box>
@@ -136,58 +148,58 @@ const Announcements = () => {
       )}
 
       {/* Duyuru Ekleme Modalı (Sadece Admin) */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Yeni Duyuru Yayınla</DialogTitle>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" fullScreen={isMobile}>
+        <DialogTitle>{t('announcements.new')}</DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <TextField
-                label="Başlık"
+                label={t('announcements.title_label')}
                 fullWidth
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 select
-                label="Hedef Kitle"
+                label={t('announcements.target')}
                 fullWidth
                 value={formData.target_role}
-                onChange={(e) => setFormData({...formData, target_role: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, target_role: e.target.value })}
               >
-                <MenuItem value="all">Herkes</MenuItem>
-                <MenuItem value="student">Öğrenciler</MenuItem>
-                <MenuItem value="faculty">Öğretim Üyeleri</MenuItem>
+                <MenuItem value="all">{t('announcements.everyone')}</MenuItem>
+                <MenuItem value="student">{t('common.student')}</MenuItem>
+                <MenuItem value="faculty">{t('common.faculty')}</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={6}>
               <TextField
                 select
-                label="Önem Derecesi"
+                label={t('announcements.priority')}
                 fullWidth
                 value={formData.priority}
-                onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
               >
-                <MenuItem value="normal">Normal</MenuItem>
-                <MenuItem value="high">Yüksek (Acil)</MenuItem>
+                <MenuItem value="normal">{t('announcements.normal')}</MenuItem>
+                <MenuItem value="high">{t('announcements.high')}</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="İçerik"
+                label={t('announcements.content')}
                 fullWidth
                 multiline
                 rows={4}
                 value={formData.content}
-                onChange={(e) => setFormData({...formData, content: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} color="inherit">İptal</Button>
-          <Button onClick={handleSubmit} variant="contained">Yayınla</Button>
+          <Button onClick={() => setOpen(false)} color="inherit">{t('common.cancel')}</Button>
+          <Button onClick={handleSubmit} variant="contained">{t('announcements.publish')}</Button>
         </DialogActions>
       </Dialog>
     </Layout>

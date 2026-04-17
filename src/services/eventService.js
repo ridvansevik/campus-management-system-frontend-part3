@@ -14,6 +14,7 @@ export const getEventDetail = (id) => api.get(`/events/${id}`);
 export const registerEvent = (eventId, customFields = {}) => api.post(`/events/${eventId}/register`, { customFields });
 export const getMyEvents = () => api.get('/events/my-events');
 export const cancelEventRegistration = (id) => api.delete(`/events/registrations/${id}`);
+
 // Admin/Personel
 export const createEvent = (data) => api.post('/events', data);
 export const updateEvent = (id, data) => api.put(`/events/${id}`, data);
@@ -30,3 +31,11 @@ export const checkInEvent = (eventId, registrationId, qrCode) => {
   // ID ile check-in
   return api.post(`/events/${eventId}/registrations/${registrationId}/checkin`, { qrCode });
 };
+
+// ============== WAITLIST FUNCTIONS ==============
+export const joinWaitlist = (eventId) => api.post(`/events/${eventId}/waitlist`);
+export const leaveWaitlist = (eventId) => api.delete(`/events/${eventId}/waitlist`);
+export const getWaitlistPosition = (eventId) => api.get(`/events/${eventId}/waitlist/position`);
+export const getMyWaitlist = () => api.get('/events/my-waitlist');
+export const acceptWaitlistSpot = (eventId) => api.post(`/events/${eventId}/waitlist/accept`);
+export const getEventWaitlist = (eventId) => api.get(`/events/${eventId}/waitlist`); // Admin only

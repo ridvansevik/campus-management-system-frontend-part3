@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { 
-  Typography, Paper, Grid, Box, Button, TextField, MenuItem, 
-  CircularProgress, Alert, Card, CardContent 
+import {
+  Typography, Paper, Grid, Box, Button, TextField, MenuItem,
+  CircularProgress, Alert, Card, CardContent
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import Layout from '../components/Layout';
 import api from '../services/api';
@@ -11,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 
 const FacultyAttendance = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeSession, setActiveSession] = useState(null);
@@ -29,20 +31,20 @@ const FacultyAttendance = () => {
       try {
         setLoading(true); // Yükleniyor...
         const res = await api.get('/sections');
-        
+
         // Hoca ise sadece kendi dersleri, Admin ise hepsi
         let mySections = res.data.data;
-        
+
         if (user.role === 'faculty' && user.facultyProfile) {
           mySections = mySections.filter(
             sec => sec.instructorId === user.facultyProfile.id
           );
         }
-        
+
         setSections(mySections);
       } catch (error) {
         console.error("Şubeler yüklenemedi", error);
-        toast.error("Ders listesi alınamadı.");
+        toast.error(t('faculty_attendance.load_error'));
       } finally {
         setLoading(false);
       }
@@ -64,7 +66,7 @@ const FacultyAttendance = () => {
         if (active) {
           setActiveSession(active);
           setRadius(active.geofence_radius);
-          toast.info("Bu ders için açık bir oturum bulundu.");
+          toast.info(t('faculty_attendance.session_found'));
         } else {
           setActiveSession(null);
         }
@@ -76,19 +78,38 @@ const FacultyAttendance = () => {
     checkActiveSession();
   }, [selectedSection]);
 
+  // 3. QR Kodunu Her 5 Saniyede Bir Yenile
+  useEffect(() => {
+    let interval;
+    if (activeSession && activeSession.status === 'active') {
+      interval = setInterval(async () => {
+        try {
+          const res = await api.put(`/attendance/sessions/${activeSession.id}/refresh-qr`);
+          const newCode = res.data.data.qr_code;
+
+          setActiveSession(prev => ({ ...prev, qr_code: newCode }));
+        } catch (error) {
+          console.error("QR yenileme hatası:", error);
+          // Hata olsa da devam etsin, belki internet gitti geldi
+        }
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [activeSession?.id, activeSession?.status]);
+
   const handleStartSession = async () => {
     if (!selectedSection) {
-      toast.warning("Lütfen bir ders şubesi seçin.");
+      toast.warning(t('faculty_attendance.select_section_warning'));
       return;
     }
 
     // 1. Tarayıcı Konum Desteği Kontrolü
     if (!navigator.geolocation) {
-      toast.error("Tarayıcınız konum servisini desteklemiyor.");
+      toast.error(t('faculty_attendance.geolocation_error'));
       return;
     }
 
-    setLoading(true); 
+    setLoading(true);
 
     // 2. Konumu Al ve İsteği Gönder (BURASI KRİTİK)
     navigator.geolocation.getCurrentPosition(
@@ -103,22 +124,22 @@ const FacultyAttendance = () => {
             latitude,  // Koordinatları backend'e gönderiyoruz
             longitude
           });
-          
+
           setActiveSession(res.data.data);
-          toast.success("Konumunuz referans alınarak yoklama başlatıldı!");
+          toast.success(t('faculty_attendance.success_start'));
         } catch (error) {
-          toast.error(error.response?.data?.error || "Oturum başlatılamadı.");
+          toast.error(error.response?.data?.error || t('faculty_attendance.error_start'));
         } finally {
           setLoading(false);
         }
       },
       (error) => {
         console.error("GPS Hatası:", error);
-        let msg = "Konum alınamadı.";
-        if (error.code === 1) msg = "Lütfen tarayıcıdan konum izni verin.";
-        else if (error.code === 2) msg = "Konum bulunamadı.";
-        else if (error.code === 3) msg = "Konum zaman aşımı.";
-        
+        let msg = t('faculty_attendance.gps_error');
+        if (error.code === 1) msg = t('faculty_attendance.gps_permission');
+        else if (error.code === 2) msg = t('faculty_attendance.gps_not_found');
+        else if (error.code === 3) msg = t('faculty_attendance.gps_timeout');
+
         toast.error(msg);
         setLoading(false);
       },
@@ -130,11 +151,11 @@ const FacultyAttendance = () => {
     if (!activeSession) return;
     try {
       await api.put(`/attendance/sessions/${activeSession.id}/close`);
-      toast.info("Oturum kapatıldı.");
+      toast.info(t('faculty_attendance.session_closed'));
       setActiveSession(null);
       setSelectedSection(''); // Seçimi sıfırla
     } catch (error) {
-      toast.error("Oturum kapatılırken hata oluştu.");
+      toast.error(t('faculty_attendance.close_error'));
     }
   };
 
@@ -142,29 +163,29 @@ const FacultyAttendance = () => {
 
   // Rol kontrolü (Admin de girebilsin diye esnettik, yoksa sadece faculty)
   if (user?.role !== 'faculty' && user?.role !== 'admin') {
-    return <Layout><Alert severity="error">Bu sayfaya yetkiniz yok.</Alert></Layout>;
+    return <Layout><Alert severity="error">{t('faculty_attendance.unauthorized')}</Alert></Layout>;
   }
 
   return (
     <Layout>
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: '#2c3e50' }}>
-        Yoklama Başlat
+        {t('faculty_attendance.title')}
       </Typography>
 
       <Grid container spacing={4}>
         {/* Sol Taraf: Ayarlar */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: 0, borderTop: '4px solid #1976d2' }}>
-            <Typography variant="h6" gutterBottom>Oturum Ayarları</Typography>
-            
+            <Typography variant="h6" gutterBottom>{t('faculty_attendance.settings_title')}</Typography>
+
             <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
                 select
-                label="Ders Şubesi Seçin"
+                label={t('faculty_attendance.select_section')}
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
                 fullWidth
-                disabled={!!activeSession} 
+                disabled={!!activeSession}
               >
                 {sections.length > 0 ? (
                   sections.map((sec) => (
@@ -173,22 +194,22 @@ const FacultyAttendance = () => {
                     </MenuItem>
                   ))
                 ) : (
-                  <MenuItem disabled>Ders bulunamadı</MenuItem>
+                  <MenuItem disabled>{t('faculty_attendance.no_section')}</MenuItem>
                 )}
               </TextField>
 
               <TextField
-                label="GPS Yarıçapı (Metre)"
+                label={t('faculty_attendance.radius_label')}
                 type="number"
                 value={radius}
                 onChange={(e) => setRadius(e.target.value)}
                 fullWidth
                 disabled={!!activeSession}
-                helperText="Öğrenciler hocanın konumuna ne kadar yakın olmalı?"
+                helperText={t('faculty_attendance.radius_helper')}
               />
 
               <TextField
-                label="Süre (Dakika)"
+                label={t('faculty_attendance.duration_label')}
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
@@ -197,25 +218,25 @@ const FacultyAttendance = () => {
               />
 
               {!activeSession ? (
-                <Button 
-                  variant="contained" 
-                  size="large" 
+                <Button
+                  variant="contained"
+                  size="large"
                   onClick={handleStartSession}
                   disabled={!selectedSection}
                   disableElevation
                   sx={{ borderRadius: 0 }}
                 >
-                  Yoklamayı Başlat
+                  {t('faculty_attendance.start_btn')}
                 </Button>
               ) : (
-                <Button 
-                  variant="outlined" 
-                  color="error" 
-                  size="large" 
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="large"
                   onClick={handleCloseSession}
                   sx={{ borderRadius: 0 }}
                 >
-                  Oturumu Bitir
+                  {t('faculty_attendance.close_btn')}
                 </Button>
               )}
             </Box>
@@ -228,35 +249,35 @@ const FacultyAttendance = () => {
             <Card sx={{ textAlign: 'center', p: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', bgcolor: '#e3f2fd' }}>
               <CardContent>
                 <Typography variant="h5" color="primary" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  YOKLAMA AKTİF
+                  {t('faculty_attendance.active_title')}
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3 }}>
-                  Öğrenciler QR kodu okutarak yoklama verebilirler.
+                  {t('faculty_attendance.active_desc')}
                 </Typography>
-                
+
                 <Box sx={{ p: 2, bgcolor: 'white', display: 'inline-block', borderRadius: 2 }}>
-                  <QRCodeSVG 
+                  <QRCodeSVG
                     value={JSON.stringify({
                       sessionId: activeSession.id,
                       code: activeSession.qr_code
-                    })} 
-                    size={200} 
+                    })}
+                    size={200}
                   />
                 </Box>
 
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Bitiş Saati: {activeSession.end_time?.slice(0, 5) || "Belirsiz"}
+                    {t('faculty_attendance.end_time')}: {activeSession.end_time?.slice(0, 5) || "Belirsiz"}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    Merkez Konum: {activeSession.latitude?.toFixed(4)}, {activeSession.longitude?.toFixed(4)}
+                    {t('faculty_attendance.center_loc')}: {activeSession.latitude?.toFixed(4)}, {activeSession.longitude?.toFixed(4)}
                   </Typography>
                 </Box>
               </CardContent>
             </Card>
           ) : (
             <Paper sx={{ p: 3, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary', bgcolor: '#f5f5f5' }}>
-              <Typography>Aktif bir yoklama oturumu bulunmuyor.</Typography>
+              <Typography>{t('faculty_attendance.no_active')}</Typography>
             </Paper>
           )}
         </Grid>

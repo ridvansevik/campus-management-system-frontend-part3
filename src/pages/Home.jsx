@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
-export default function Home() { 
+import { useTranslation } from 'react-i18next';
+
+export default function Home() {
+  const { t } = useTranslation();
   return (
     <div style={{ padding: 20 }}>
-      <h1>Akıllı Kampüs Sistemi</h1>
-      <Link to="/login">Giriş Yap</Link> | <Link to="/register">Kayıt Ol</Link>
+      <h1>{t('home.title')}</h1>
+      <Link to="/login">{t('home.login')}</Link> | <Link to="/register">{t('home.register')}</Link>
     </div>
-  ); 
+  );
 }

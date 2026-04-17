@@ -9,6 +9,7 @@ import { getAllDepartmentSchedules, getSchedulesByDepartment } from '../../servi
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import Layout from '../../components/Layout';
+import { useTranslation } from 'react-i18next';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -16,6 +17,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
 
 const DepartmentSchedules = () => {
+  const { t } = useTranslation();
   const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [schedules, setSchedules] = useState([]);
@@ -41,7 +43,7 @@ const DepartmentSchedules = () => {
       const res = await api.get('/departments');
       setDepartments(res.data.data || []);
     } catch (error) {
-      toast.error('Bölümler yüklenemedi');
+      toast.error(t('department_schedules.load_error_dept'));
     }
   };
 
@@ -51,7 +53,7 @@ const DepartmentSchedules = () => {
       const res = await getAllDepartmentSchedules({ semester, year });
       setSchedules(res.data.data || []);
     } catch (error) {
-      toast.error('Programlar yüklenemedi: ' + (error.response?.data?.error || error.message));
+      toast.error(t('department_schedules.load_error_schedule') + ': ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -64,24 +66,16 @@ const DepartmentSchedules = () => {
       const res = await getSchedulesByDepartment(selectedDepartment, { semester, year });
       setSchedules(res.data.data || []);
     } catch (error) {
-      toast.error('Programlar yüklenemedi: ' + (error.response?.data?.error || error.message));
+      toast.error(t('department_schedules.load_error_schedule') + ': ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
   };
 
   const getDayName = (day) => {
-    const days = {
-      'Monday': 'Pazartesi',
-      'Tuesday': 'Salı',
-      'Wednesday': 'Çarşamba',
-      'Thursday': 'Perşembe',
-      'Friday': 'Cuma',
-      'Saturday': 'Cumartesi',
-      'Sunday': 'Pazar'
-    };
-    return days[day] || day;
+    return t(`department_schedules.days.${day}`) || day;
   };
+
 
   const formatTime = (time) => {
     if (!time) return '';
@@ -129,19 +123,19 @@ const DepartmentSchedules = () => {
           <Box display="flex" justifyContent="space-between" alignItems="start" mb={1}>
             <Box>
               <Typography variant="h6" fontWeight="bold" color="primary">
-                {course?.code || 'Ders Kodu'} - {course?.name || 'Ders Adı'}
+                {course?.code || t('department_schedules.course_code')} - {course?.name || t('department_schedules.course_name')}
               </Typography>
               {department && (
-                <Chip 
-                  label={department.name} 
-                  size="small" 
+                <Chip
+                  label={department.name}
+                  size="small"
                   sx={{ mt: 0.5 }}
                   color="secondary"
                 />
               )}
             </Box>
-            <Chip 
-              label={`Şube ${schedule.section?.section_number || ''}`}
+            <Chip
+              label={`${t('department_schedules.section')} ${schedule.section?.section_number || ''}`}
               color="primary"
               variant="outlined"
             />
@@ -152,13 +146,13 @@ const DepartmentSchedules = () => {
               <Box display="flex" alignItems="center" gap={1}>
                 <AccessTimeIcon fontSize="small" color="action" />
                 <Typography variant="body2">
-                  <strong>Gün:</strong> {getDayName(schedule.day_of_week)}
+                  <strong>{t('department_schedules.day')}:</strong> {getDayName(schedule.day_of_week)}
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center" gap={1} sx={{ mt: 0.5 }}>
                 <AccessTimeIcon fontSize="small" color="action" />
                 <Typography variant="body2">
-                  <strong>Saat:</strong> {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+                  <strong>{t('department_schedules.time')}:</strong> {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
                 </Typography>
               </Box>
             </Grid>
@@ -166,7 +160,7 @@ const DepartmentSchedules = () => {
               <Box display="flex" alignItems="center" gap={1}>
                 <LocationOnIcon fontSize="small" color="action" />
                 <Typography variant="body2">
-                  <strong>Derslik:</strong> {classroom?.code || 'Belirtilmemiş'}
+                  <strong>{t('department_schedules.classroom')}:</strong> {classroom?.code || t('department_schedules.not_specified')}
                 </Typography>
               </Box>
               {classroom?.building && (
@@ -180,7 +174,7 @@ const DepartmentSchedules = () => {
                 <Box display="flex" alignItems="center" gap={1}>
                   <PersonIcon fontSize="small" color="action" />
                   <Typography variant="body2">
-                    <strong>Öğretim Üyesi:</strong> {instructor.user?.name || instructor.name || 'Belirtilmemiş'}
+                    <strong>{t('department_schedules.instructor')}:</strong> {instructor.user?.name || instructor.name || t('department_schedules.not_specified')}
                   </Typography>
                   {instructor.title && (
                     <Chip label={instructor.title} size="small" variant="outlined" />
@@ -212,8 +206,8 @@ const DepartmentSchedules = () => {
               <Typography variant="h5" fontWeight="bold">
                 {deptData.department.name}
               </Typography>
-              <Chip 
-                label={`${deptData.schedules.length} ders`}
+              <Chip
+                label={`${deptData.schedules.length} ${t('common.course', { count: deptData.schedules.length })}`}
                 size="small"
                 color="primary"
               />
@@ -222,10 +216,10 @@ const DepartmentSchedules = () => {
             <Grid container spacing={2}>
               {days.map(day => (
                 <Grid item xs={12} md={2.4} key={day}>
-                  <Paper 
-                    variant="outlined" 
-                    sx={{ 
-                      p: 2, 
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
                       minHeight: 200,
                       bgcolor: grouped[day].length > 0 ? 'background.paper' : 'grey.50'
                     }}
@@ -235,16 +229,16 @@ const DepartmentSchedules = () => {
                     </Typography>
                     {grouped[day].length === 0 ? (
                       <Typography variant="caption" color="text.secondary">
-                        Ders yok
+                        {t('department_schedules.no_class')}
                       </Typography>
                     ) : (
                       grouped[day].map(schedule => (
-                        <Box 
-                          key={schedule.id} 
-                          sx={{ 
-                            mb: 1, 
-                            p: 1, 
-                            bgcolor: 'primary.light', 
+                        <Box
+                          key={schedule.id}
+                          sx={{
+                            mb: 1,
+                            p: 1,
+                            bgcolor: 'primary.light',
                             borderRadius: 1,
                             cursor: 'pointer',
                             '&:hover': { bgcolor: 'primary.main', color: 'white' }
@@ -279,10 +273,10 @@ const DepartmentSchedules = () => {
           <Grid container spacing={2}>
             {days.map(day => (
               <Grid item xs={12} md={2.4} key={day}>
-                <Paper 
-                  variant="outlined" 
-                  sx={{ 
-                    p: 2, 
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
                     minHeight: 200,
                     bgcolor: grouped[day].length > 0 ? 'background.paper' : 'grey.50'
                   }}
@@ -292,16 +286,16 @@ const DepartmentSchedules = () => {
                   </Typography>
                   {grouped[day].length === 0 ? (
                     <Typography variant="caption" color="text.secondary">
-                      Ders yok
+                      {t('department_schedules.no_class')}
                     </Typography>
                   ) : (
                     grouped[day].map(schedule => (
-                      <Box 
-                        key={schedule.id} 
-                        sx={{ 
-                          mb: 1, 
-                          p: 1, 
-                          bgcolor: 'primary.light', 
+                      <Box
+                        key={schedule.id}
+                        sx={{
+                          mb: 1,
+                          p: 1,
+                          bgcolor: 'primary.light',
                           borderRadius: 1,
                           cursor: 'pointer',
                           '&:hover': { bgcolor: 'primary.main', color: 'white' }
@@ -334,7 +328,7 @@ const DepartmentSchedules = () => {
         <Box display="flex" alignItems="center" gap={2} mb={3}>
           <CalendarMonthIcon sx={{ fontSize: 40, color: 'primary.main' }} />
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Bölüm Ders Programları
+            {t('department_schedules.title')}
           </Typography>
         </Box>
 
@@ -343,10 +337,10 @@ const DepartmentSchedules = () => {
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={3}>
               <FormControl fullWidth>
-                <InputLabel>Görünüm Modu</InputLabel>
+                <InputLabel>{t('department_schedules.view_mode')}</InputLabel>
                 <Select
                   value={viewMode}
-                  label="Görünüm Modu"
+                  label={t('department_schedules.view_mode')}
                   onChange={(e) => {
                     setViewMode(e.target.value);
                     if (e.target.value === 'department') {
@@ -354,18 +348,18 @@ const DepartmentSchedules = () => {
                     }
                   }}
                 >
-                  <MenuItem value="all">Tüm Bölümler</MenuItem>
-                  <MenuItem value="department">Tek Bölüm</MenuItem>
+                  <MenuItem value="all">{t('department_schedules.all_departments')}</MenuItem>
+                  <MenuItem value="department">{t('department_schedules.single_department')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             {viewMode === 'department' && (
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
-                  <InputLabel>Bölüm Seç</InputLabel>
+                  <InputLabel>{t('department_schedules.select_department')}</InputLabel>
                   <Select
                     value={selectedDepartment}
-                    label="Bölüm Seç"
+                    label={t('department_schedules.select_department')}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
                   >
                     {departments.map((dept) => (
@@ -379,22 +373,22 @@ const DepartmentSchedules = () => {
             )}
             <Grid item xs={12} md={2}>
               <FormControl fullWidth>
-                <InputLabel>Dönem</InputLabel>
+                <InputLabel>{t('department_schedules.semester')}</InputLabel>
                 <Select
                   value={semester}
-                  label="Dönem"
+                  label={t('department_schedules.semester')}
                   onChange={(e) => setSemester(e.target.value)}
                 >
-                  <MenuItem value="Fall">Güz</MenuItem>
-                  <MenuItem value="Spring">Bahar</MenuItem>
-                  <MenuItem value="Summer">Yaz</MenuItem>
+                  <MenuItem value="Fall">{t('department_schedules.fall')}</MenuItem>
+                  <MenuItem value="Spring">{t('department_schedules.spring')}</MenuItem>
+                  <MenuItem value="Summer">{t('department_schedules.summer')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={2}>
               <TextField
                 fullWidth
-                label="Yıl"
+                label={t('department_schedules.year')}
                 type="number"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
@@ -414,7 +408,7 @@ const DepartmentSchedules = () => {
                 }}
                 disabled={loading || (viewMode === 'department' && !selectedDepartment)}
               >
-                Yenile
+                {t('department_schedules.refresh')}
               </Button>
             </Grid>
           </Grid>
@@ -427,27 +421,27 @@ const DepartmentSchedules = () => {
           </Box>
         ) : viewMode === 'all' ? (
           schedules.length === 0 ? (
-            <Alert severity="info">Seçilen dönem ve yıl için program bulunamadı.</Alert>
+            <Alert severity="info">{t('department_schedules.no_schedule_year')}</Alert>
           ) : (
             <>
               {renderWeeklyView()}
               {/* Detaylı Liste Görünümü */}
               <Paper sx={{ p: 3, mt: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Detaylı Liste Görünümü
+                  {t('department_schedules.detailed_view')}
                 </Typography>
                 <TableContainer>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell><strong>Bölüm</strong></TableCell>
-                        <TableCell><strong>Ders Kodu</strong></TableCell>
-                        <TableCell><strong>Ders Adı</strong></TableCell>
-                        <TableCell><strong>Şube</strong></TableCell>
-                        <TableCell><strong>Gün</strong></TableCell>
-                        <TableCell><strong>Saat</strong></TableCell>
-                        <TableCell><strong>Derslik</strong></TableCell>
-                        <TableCell><strong>Öğretim Üyesi</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.department')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.course_code')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.course_name')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.section')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.day')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.time')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.classroom')}</strong></TableCell>
+                        <TableCell><strong>{t('department_schedules.instructor')}</strong></TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -477,7 +471,7 @@ const DepartmentSchedules = () => {
           )
         ) : selectedDepartment ? (
           schedules.length === 0 ? (
-            <Alert severity="info">Seçilen bölüm için program bulunamadı.</Alert>
+            <Alert severity="info">{t('department_schedules.no_schedule_dept')}</Alert>
           ) : (
             <>
               <Paper sx={{ p: 3, mb: 3 }}>
@@ -486,8 +480,8 @@ const DepartmentSchedules = () => {
                   <Typography variant="h5" fontWeight="bold">
                     {departments.find(d => d.id === selectedDepartment)?.name}
                   </Typography>
-                  <Chip 
-                    label={`${schedules.length} ders`}
+                  <Chip
+                    label={`${schedules.length} ${t('common.course', { count: schedules.length })}`}
                     size="small"
                     color="primary"
                   />
@@ -497,14 +491,14 @@ const DepartmentSchedules = () => {
               {/* Detaylı Liste */}
               <Paper sx={{ p: 3, mt: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Detaylı Liste
+                  {t('department_schedules.detailed_view')}
                 </Typography>
                 {schedules.map(schedule => renderScheduleCard(schedule))}
               </Paper>
             </>
           )
         ) : (
-          <Alert severity="info">Lütfen bir bölüm seçin.</Alert>
+          <Alert severity="info">{t('department_schedules.select_dept_warning')}</Alert>
         )}
       </Container>
     </Layout>

@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Card,
   CardContent,
@@ -12,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PeopleIcon from '@mui/icons-material/People';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Reusable Event Card Component
@@ -22,13 +22,14 @@ import PeopleIcon from '@mui/icons-material/People';
  * @param {Boolean} showRegisterButton - Kayıt ol butonu gösterilsin mi? (default: true)
  * @param {Boolean} clickable - Kart tıklanabilir mi? (default: true)
  */
-const EventCard = ({ 
-  event, 
-  onRegister, 
+const EventCard = ({
+  event,
+  onRegister,
   showRegisterButton = true,
   clickable = true
 }) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const isFull = event.registered_count >= event.capacity;
 
   const handleCardClick = () => {
@@ -47,11 +48,11 @@ const EventCard = ({
   };
 
   return (
-    <Card 
-      elevation={2} 
-      sx={{ 
-        height: '100%', 
-        display: 'flex', 
+    <Card
+      elevation={2}
+      sx={{
+        height: '100%',
+        display: 'flex',
         flexDirection: 'column',
         cursor: clickable ? 'pointer' : 'default',
         '&:hover': clickable ? { boxShadow: 6 } : {}
@@ -63,18 +64,18 @@ const EventCard = ({
           <Typography variant="h6" component="div" sx={{ flex: 1, mr: 1 }}>
             {event.title}
           </Typography>
-          <Chip 
-            label={event.category} 
-            color="primary" 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            label={event.category}
+            color="primary"
+            size="small"
+            variant="outlined"
           />
         </Box>
-        
-        <Typography 
-          color="text.secondary" 
-          sx={{ 
-            mt: 1, 
+
+        <Typography
+          color="text.secondary"
+          sx={{
+            mt: 1,
             mb: 2,
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -88,7 +89,7 @@ const EventCard = ({
         <Box display="flex" alignItems="center" gap={1} sx={{ mt: 2, mb: 1 }}>
           <EventIcon fontSize="small" color="action" />
           <Typography variant="body2">
-            {new Date(event.date).toLocaleDateString('tr-TR')} | {event.start_time}
+            {new Date(event.date).toLocaleDateString(i18n.language)} | {event.start_time}
           </Typography>
         </Box>
 
@@ -99,52 +100,52 @@ const EventCard = ({
 
         <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
           <PeopleIcon fontSize="small" color="action" />
-          <Typography 
-            variant="caption" 
-            sx={{ 
+          <Typography
+            variant="caption"
+            sx={{
               color: isFull ? 'error.main' : 'success.main',
               fontWeight: 'bold'
             }}
           >
-            {event.registered_count} / {event.capacity} kişi
+            {event.registered_count} / {event.capacity} {t('events.person')}
           </Typography>
         </Box>
 
         {event.is_paid && event.price > 0 && (
-          <Chip 
-            label={`${event.price} ₺`} 
-            color="warning" 
-            size="small" 
-            sx={{ mb: 1 }} 
+          <Chip
+            label={`${event.price} ₺`}
+            color="warning"
+            size="small"
+            sx={{ mb: 1 }}
           />
         )}
 
         {event.registration_deadline && (
           <Typography variant="caption" color="text.secondary" display="block">
-            Son kayıt: {new Date(event.registration_deadline).toLocaleDateString('tr-TR')}
+            {t('events.deadline')}: {new Date(event.registration_deadline).toLocaleDateString(i18n.language)}
           </Typography>
         )}
       </CardContent>
       {showRegisterButton && (
         <CardActions sx={{ p: 2, pt: 0 }}>
-          <Button 
-            variant="outlined" 
-            fullWidth 
+          <Button
+            variant="outlined"
+            fullWidth
             sx={{ mr: 1 }}
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/events/${event.id}`);
             }}
           >
-            Detay
+            {t('events.details')}
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             fullWidth
             onClick={handleRegister}
             disabled={isFull}
           >
-            {isFull ? 'Dolu' : 'Kayıt Ol'}
+            {isFull ? t('events.full') : t('events.register')}
           </Button>
         </CardActions>
       )}

@@ -5,6 +5,33 @@ export const getScheduleDetail = (scheduleId) => api.get(`/scheduling/${schedule
 export const downloadIcal = () => api.get('/scheduling/my-schedule/ical', { responseType: 'blob' });
 // Admin
 export const generateSchedule = (data) => api.post('/scheduling/generate', data); // { semester, year, clearExisting }
+
+// Draft Schedule Management (Admin)
+export const getDraftSchedules = (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.semester) queryParams.append('semester', params.semester);
+  if (params.year) queryParams.append('year', params.year);
+  const queryString = queryParams.toString();
+  return api.get(`/scheduling/drafts${queryString ? `?${queryString}` : ''}`);
+};
+
+export const approveDraftSchedule = (batchId, options = {}) => {
+  return api.post(`/scheduling/approve/${batchId}`, options);
+};
+
+export const rejectDraftSchedule = (batchId) => {
+  return api.delete(`/scheduling/reject/${batchId}`);
+};
+
+export const getActiveSchedules = (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.semester) queryParams.append('semester', params.semester);
+  if (params.year) queryParams.append('year', params.year);
+  if (params.departmentId) queryParams.append('departmentId', params.departmentId);
+  const queryString = queryParams.toString();
+  return api.get(`/scheduling/active${queryString ? `?${queryString}` : ''}`);
+};
+
 export const getAllDepartmentSchedules = (params = {}) => {
   const queryParams = new URLSearchParams();
   if (params.semester) queryParams.append('semester', params.semester);
@@ -30,5 +57,5 @@ export const approveReservation = (id) => api.put(`/reservations/${id}/approve`)
 export const rejectReservation = (id) => api.put(`/reservations/${id}/reject`);
 // YENİ: Raporlama Endpoint'i
 export const getResourceUtilization = () => {
-  return api.get('/schedule/reports/utilization');
+  return api.get('/scheduling/reports/utilization');
 };

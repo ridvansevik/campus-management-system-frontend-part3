@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -21,36 +22,40 @@ import { QRCodeSVG } from 'qrcode.react';
  * @param {String} description - QR kod açıklaması (opsiyonel)
  * @param {Number} size - QR kod boyutu (default: 300)
  */
-const QRCodeDisplay = ({ 
-  open, 
-  onClose, 
-  qrCode, 
-  title = 'QR Kod',
-  description = 'QR kodunuzu görevliye gösteriniz.',
+const QRCodeDisplay = ({
+  open,
+  onClose,
+  qrCode,
+  title, // Default props removed to allow translation inside component
+  description,
   size = 300
 }) => {
+  const { t } = useTranslation();
+
+  const finalTitle = title || t('qr_code.title');
+  const finalDescription = description || t('qr_code.description');
   if (!qrCode) return null;
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={onClose}
       maxWidth="xs"
       fullWidth
     >
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle>{finalTitle}</DialogTitle>
       <DialogContent sx={{ textAlign: 'center', py: 3 }}>
         <Box>
           <QRCodeSVG value={qrCode} size={size} />
-          {description && (
+          {finalDescription && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              {description}
+              {finalDescription}
             </Typography>
           )}
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Kapat</Button>
+        <Button onClick={onClose}>{t('common.close')}</Button>
       </DialogActions>
     </Dialog>
   );
